@@ -1,0 +1,424 @@
+{
+  "name": "Zyura",
+  "desc": "",
+  "methods": [
+    {
+      "name": "createApplication",
+      "args": [],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "initialize",
+      "args": [
+        {
+          "name": "admin",
+          "type": "address"
+        },
+        {
+          "name": "usdcMint",
+          "type": "uint64"
+        },
+        {
+          "name": "oracleAppId",
+          "type": "uint64"
+        },
+        {
+          "name": "riskPoolVault",
+          "type": "address"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "getAdmin",
+      "args": [],
+      "returns": {
+        "type": "address"
+      }
+    },
+    {
+      "name": "isPaused",
+      "args": [],
+      "returns": {
+        "type": "bool"
+      }
+    },
+    {
+      "name": "getUsdcMint",
+      "args": [],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getOracleAppId",
+      "args": [],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getRiskPoolVault",
+      "args": [],
+      "returns": {
+        "type": "address"
+      }
+    },
+    {
+      "name": "setPolicyNftIssuer",
+      "args": [
+        {
+          "name": "issuer",
+          "type": "address"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "getPolicyNftIssuer",
+      "args": [],
+      "returns": {
+        "type": "address"
+      }
+    },
+    {
+      "name": "createProduct",
+      "args": [
+        {
+          "name": "productId",
+          "type": "uint64"
+        },
+        {
+          "name": "delayThresholdMinutes",
+          "type": "uint64"
+        },
+        {
+          "name": "coverageAmount",
+          "type": "uint64"
+        },
+        {
+          "name": "premiumRateBps",
+          "type": "uint64"
+        },
+        {
+          "name": "claimWindowHours",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "updateProduct",
+      "args": [
+        {
+          "name": "productId",
+          "type": "uint64"
+        },
+        {
+          "name": "delayThresholdMinutes",
+          "type": "uint64"
+        },
+        {
+          "name": "coverageAmount",
+          "type": "uint64"
+        },
+        {
+          "name": "premiumRateBps",
+          "type": "uint64"
+        },
+        {
+          "name": "claimWindowHours",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "getProductDelayThreshold",
+      "args": [
+        {
+          "name": "productId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getProductCoverageAmount",
+      "args": [
+        {
+          "name": "productId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getProductPremiumRateBps",
+      "args": [
+        {
+          "name": "productId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getProductClaimWindowHours",
+      "args": [
+        {
+          "name": "productId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "isProductActive",
+      "args": [
+        {
+          "name": "productId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "bool"
+      }
+    },
+    {
+      "name": "purchasePolicy",
+      "args": [
+        {
+          "name": "premiumPayment",
+          "type": "axfer"
+        },
+        {
+          "name": "policyId",
+          "type": "uint64"
+        },
+        {
+          "name": "productId",
+          "type": "uint64"
+        },
+        {
+          "name": "flightNumber",
+          "type": "string"
+        },
+        {
+          "name": "departureTime",
+          "type": "uint64"
+        },
+        {
+          "name": "premiumAmount",
+          "type": "uint64"
+        },
+        {
+          "name": "createMetadata",
+          "type": "bool"
+        },
+        {
+          "name": "metadataUri",
+          "type": "string"
+        },
+        {
+          "name": "nftAssetId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "linkPolicyNft",
+      "desc": "Record which ASA is the policy NFT for this policy. Call after the policy NFT exists in the policyholder wallet.\nIf pol_nft_issuer is zero: ASA creator must be the policyholder (self-mint).\nIf pol_nft_issuer is set: ASA creator must be that address (house mint); policyholder must hold ≥ 1 unit.",
+      "args": [
+        {
+          "name": "policyId",
+          "type": "uint64"
+        },
+        {
+          "name": "nftAssetId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "getPolicyNftAssetId",
+      "args": [
+        {
+          "name": "policyId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "processPayout",
+      "args": [
+        {
+          "name": "policyId",
+          "type": "uint64"
+        },
+        {
+          "name": "delayMinutes",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "getPolicyStatus",
+      "args": [
+        {
+          "name": "policyId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getPolicyPolicyholder",
+      "args": [
+        {
+          "name": "policyId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "address"
+      }
+    },
+    {
+      "name": "getPolicyCoverageAmount",
+      "args": [
+        {
+          "name": "policyId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "isPolicyActive",
+      "args": [
+        {
+          "name": "policyId",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "bool"
+      }
+    },
+    {
+      "name": "depositLiquidity",
+      "args": [
+        {
+          "name": "depositPayment",
+          "type": "axfer"
+        },
+        {
+          "name": "amount",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "withdrawLiquidity",
+      "args": [
+        {
+          "name": "provider",
+          "type": "address"
+        },
+        {
+          "name": "amount",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "setPauseStatus",
+      "args": [
+        {
+          "name": "paused",
+          "type": "uint64"
+        }
+      ],
+      "returns": {
+        "type": "void"
+      }
+    },
+    {
+      "name": "getLpTotalDeposited",
+      "args": [
+        {
+          "name": "provider",
+          "type": "address"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getLpTotalWithdrawn",
+      "args": [
+        {
+          "name": "provider",
+          "type": "address"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    },
+    {
+      "name": "getLpActiveDeposit",
+      "args": [
+        {
+          "name": "provider",
+          "type": "address"
+        }
+      ],
+      "returns": {
+        "type": "uint64"
+      }
+    }
+  ]
+}
