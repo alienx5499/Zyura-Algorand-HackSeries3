@@ -5,21 +5,19 @@ This repository uses GitHub Actions for CI only. Deployments are manual for both
 ## Workflows
 
 - `.github/workflows/ci.yml`
-  - Runs on `pull_request` and `push` to `main`/`master`
+  - Runs on `pull_request`, `push`, `merge_group`, and manual dispatch
   - Frontend gates:
     - `pnpm format:check`
     - `pnpm lint`
-    - `pnpm exec tsc --noEmit`
-    - `pnpm build`
   - Contracts gates:
     - `pnpm format:check`
     - `pnpm lint`
-    - `pnpm build` (compile + client generation)
+    - `pnpm compile-contract`
   - Optional integration tests for contracts can be run manually with workflow dispatch input `run_contract_tests=true`.
 
 - `.github/workflows/security-scan.yml`
   - Runs on `pull_request`, `push`, `merge_group`, and weekly schedule
-  - Scans frontend and contracts dependencies with `pnpm audit` (`high`/`critical` threshold)
+  - Scans frontend and contracts dependencies with `pnpm audit` (`critical` threshold)
   - Runs TruffleHog secret scan
   - Runs GitHub dependency review on PRs
 
@@ -31,7 +29,6 @@ This repository uses GitHub Actions for CI only. Deployments are manual for both
 ### Optional contracts test execution
 
 - `ALGOD_SERVER`
-- `ALGOD_TOKEN`
 - `ALGOD_PORT` (optional)
 - `INDEXER_SERVER` (optional)
 - `INDEXER_TOKEN` (optional)
@@ -50,7 +47,7 @@ For robust quality gates, enable branch protection on `main`:
 
 - Require PR before merge
 - Require status checks to pass:
-  - `Frontend - format, lint, typecheck, build`
+  - `Frontend - format, lint`
   - `Contracts - format, lint, compile`
   - `Frontend dependency audit`
   - `Contracts dependency audit`
