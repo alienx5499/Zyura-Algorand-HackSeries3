@@ -1,0 +1,60 @@
+<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+  
+  <!-- Header with Logos -->
+  <!-- In EmailJS: set template param site_url to your deployed URL (e.g. https://zyura-algorand.vercel.app) so images load. Logo files are in frontend/public/ -->
+  <div style="text-align: center; padding: 25px 20px; background-color: #000000; border-radius: 8px 8px 0 0;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+      <tr>
+        <td style="text-align: center; vertical-align: middle;">
+          <!-- ZYURA Logo -->
+          <img src="{{site_url}}/logo.svg" alt="ZYURA Logo" style="height: 35px; width: auto; max-width: 180px; vertical-align: middle; display: inline-block;" />
+          <span style="color: #8b5cf6; font-size: 18px; font-weight: 600; margin: 0 10px; vertical-align: middle;">×</span>
+          <!-- Algorand Logo: public/algorand-logo.svg. For Gmail etc. add public/algorand-logo.png and use .png here -->
+          <img src="{{site_url}}/algorand-logo.svg" alt="Algorand Logo" style="height: 35px; width: auto; max-width: 180px; vertical-align: middle; display: inline-block;" />
+        </td>
+      </tr>
+      <tr>
+        <td style="text-align: center; padding-top: 10px;">
+          <div style="color: #8b5cf6; font-size: 14px; font-weight: 500;">From ZYURA on Algorand</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Message Content -->
+  <div style="padding: 30px 20px; background-color: #ffffff;">
+    <div style="margin-bottom: 20px; color: #2c3e50; font-size: 16px;">
+      A message by <strong>{{name}}</strong> has been received. Kindly respond at your earliest convenience.
+    </div>
+
+    <div style="margin-top: 20px; padding: 15px 0; border-width: 1px 0; border-style: dashed; border-color: lightgrey;">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="vertical-align: top; width: 60px;">
+            <div style="padding: 6px 10px; margin: 0 10px; background-color: aliceblue; border-radius: 5px; font-size: 26px; text-align: center; width: 40px; height: 40px; line-height: 40px;" role="img">
+              👤
+            </div>
+          </td>
+          <td style="vertical-align: top;">
+            <div style="color: #2c3e50; font-size: 16px; margin-bottom: 5px;"><strong>{{name}}</strong></div>
+            <div style="color: #cccccc; font-size: 13px; margin-bottom: 10px;">{{time}}</div>
+            <div style="color: #666666; font-size: 14px; margin-bottom: 10px; font-weight: 600;">Subject: {{subject}}</div>
+            <p style="font-size: 16px; color: #333333; margin: 0; line-height: 1.6;">{{message}}</p>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eeeeee;">
+              <div style="color: #666666; font-size: 13px;">Reply to: <a href="mailto:{{email}}" style="color: #8b5cf6; text-decoration: none;">{{email}}</a></div>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 0 0 8px 8px; border-top: 1px solid #eeeeee;">
+    <div style="color: #666666; font-size: 12px;">
+      Powered by <strong style="color: #8b5cf6;">ZYURA</strong> on <strong style="color: #0CDAD9;">Algorand</strong>
+    </div>
+  </div>
+
+</div>
+

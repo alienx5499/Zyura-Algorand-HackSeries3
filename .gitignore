@@ -1,0 +1,96 @@
+# --- Environment & secrets ---
+.env
+.env.*
+!.env.example
+!.env*.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+*.secret
+
+# --- Dependencies ---
+node_modules/
+.pnp
+.pnp.js
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# --- Build outputs ---
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# --- Next.js / Vercel ---
+.vercel
+.turbo
+
+# --- Caches & tool state ---
+.cache/
+.parcel-cache/
+.eslintcache
+.prettiercache
+.stylelintcache
+*.pid
+*.seed
+*.pid.lock
+
+# --- Logs & debug ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+.pnpm-debug.log*
+
+# --- Tests & coverage ---
+coverage/
+.nyc_output/
+jest-cache/
+.jest/
+playwright-report/
+test-results/
+*.lcov
+
+# --- Algorand / AlgoKit ---
+.algorand/
+.algo/
+algod-data/
+kmd-data/
+
+# --- IDE & editors ---
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.code-workspace
+
+# --- OS ---
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# --- Misc generated / local ---
+*.local
+*.orig
+*.rej
+tmp/
+temp/
+.todo
