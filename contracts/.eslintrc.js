@@ -62,5 +62,23 @@ module.exports = {
         'linebreak-style': 'off', // Disable line ending checks for TEALScript files
       },
     },
+    {
+      files: ['scripts/**/*.ts'],
+      rules: {
+        'no-console': 'off',
+        'no-await-in-loop': 'off',
+        'no-restricted-syntax': 'off',
+        'no-continue': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
+        'no-plusplus': 'off',
+        camelcase: 'off',
+        'no-use-before-define': 'off',
+        'no-promise-executor-return': 'off',
+        'no-shadow': 'off',
+        'no-unused-vars': 'off',
+        'no-empty': 'off',
+        'no-undef': 'off',
+      },
+    },
   ],
 };
