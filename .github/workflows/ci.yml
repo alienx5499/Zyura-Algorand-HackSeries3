@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     needs: contracts-build
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_contract_tests == true && secrets.ALGOD_SERVER != '' && secrets.ALGOD_TOKEN != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_contract_tests == true }}
     defaults:
       run:
         working-directory: contracts
@@ -127,6 +127,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Validate required contract test secrets
+        run: |
+          if [ -z "$ALGOD_SERVER" ] || [ -z "$ALGOD_TOKEN" ]; then
+            echo "Missing required secrets: ALGOD_SERVER and/or ALGOD_TOKEN."
+            exit 1
+          fi
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
