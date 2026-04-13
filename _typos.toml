@@ -1,0 +1,10 @@
+[default.extend-words]
+# Domain terms and abbreviations used throughout the codebase.
+PN = "PN"
+PNR = "PNR"
+PNRs = "PNRs"
+pnrs = "pnrs"
+OTA = "OTA"
+OTAs = "OTAs"
+OPTIN = "OPTIN"
+BA = "BA"

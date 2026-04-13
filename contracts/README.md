@@ -14,7 +14,7 @@ This template assumes you have a local network running on your machine. The easi
 
 `npm run build` will compile the contract to TEAL and generate an ABI and appspec JSON in [./contracts/artifacts](./contracts/artifacts/) and a algokit TypeScript client in [./contracts/clients](./contracts/clients/).
 
-`npm run compile-contract` or `npm run generate-client` can be used to compile the contract or generate the contract seperately.
+`npm run compile-contract` or `npm run generate-client` can be used to compile the contract or generate the contract separately.
 
 ### Run Tests
 

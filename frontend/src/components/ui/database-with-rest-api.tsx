@@ -246,7 +246,7 @@ const DatabaseWithRestApi = ({
             {title ? title : "Data exchange using a customized REST API"}
           </span>
         </div>
-        {/* box outter circle */}
+        {/* box outer circle */}
         <div className="absolute -bottom-8 z-30 grid h-[60px] w-[60px] place-items-center rounded-full border-t bg-[#141516] font-semibold text-xs">
           {circleText ? circleText : "SVG"}
         </div>

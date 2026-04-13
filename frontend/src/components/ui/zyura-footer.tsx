@@ -4,16 +4,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import {
-  CornerDownLeft,
-  Plane,
-  Zap,
-  Shield,
-  FileText,
-  HelpCircle,
-  Lock,
-} from "lucide-react";
-import { Github, Heart, Twitter } from "lucide-react";
+import { CornerDownLeft, Plane, FileText, Lock } from "lucide-react";
+import { Heart } from "lucide-react";
+import { SiGithub, SiX } from "react-icons/si";
 import Image from "next/image";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { SparklesCore } from "@/components/ui/sparkles";
@@ -27,10 +20,7 @@ const asciiColors = [
   "rgba(6, 182, 212, 0.9)", // cyan
   "rgba(255, 255, 255, 0.9)", // back to white
 ];
-
-// ASCII Logo Component with Random Character Animation
-function AnimatedAsciiLogo() {
-  const baseAscii = `                                  ***                       
+const baseAscii = `                                  ***                       
                           **    ***                         
                            ******                           
                                                             
@@ -48,7 +38,10 @@ function AnimatedAsciiLogo() {
                          ***    ***                         
                             ****`;
 
-  const charSet = "!@#$%^&*()~`_+-=[]{}|;:',.<>?/";
+const charSet = "!@#$%^&*()~`_+-=[]{}|;:',.<>?/";
+
+// ASCII Logo Component with Random Character Animation
+function AnimatedAsciiLogo() {
   const [asciiArt, setAsciiArt] = useState(baseAscii);
   const [colorIndex, setColorIndex] = useState(0);
   const [glowIntensity, setGlowIntensity] = useState(0.5);
@@ -282,7 +275,7 @@ function FooterCTA() {
                   Github
                 </span>
                 <Badge className="bg-purple-500/30 text-white border-purple-500/50 transition-all duration-200 group-hover:shadow-xl group-hover:bg-purple-500/50 shadow-white/70 z-10">
-                  <Github className="size-4" />
+                  <SiGithub className="size-4" />
                 </Badge>
               </Link>
             </Button>
@@ -355,7 +348,7 @@ export function ZyuraFooter() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <Github className="h-4 w-4" />
+                        <SiGithub className="h-4 w-4" />
                       </Link>
                     </Button>
                   </motion.div>
@@ -374,7 +367,7 @@ export function ZyuraFooter() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        <Twitter className="h-4 w-4" />
+                        <SiX className="h-4 w-4" />
                       </Link>
                     </Button>
                   </motion.div>

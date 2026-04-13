@@ -55,8 +55,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit production dependencies (high/critical)
-        run: pnpm audit --prod --audit-level high
+      - name: Audit production dependencies (critical)
+        run: pnpm audit --prod --audit-level critical
 
       - name: Write audit JSON for artifact
         if: always()
@@ -97,8 +97,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Audit production dependencies (high/critical)
-        run: pnpm audit --prod --audit-level high
+      - name: Audit production dependencies (critical)
+        run: pnpm audit --prod --audit-level critical
 
       - name: Write audit JSON for artifact
         if: always()

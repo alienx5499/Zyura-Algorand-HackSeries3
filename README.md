@@ -720,7 +720,7 @@ flowchart TD
     CHECK_PAUSE -->|No| CHECK_PRODUCT{Product Active?}
     CHECK_PRODUCT -->|No| ERROR3([Error: Product Inactive])
     CHECK_PRODUCT -->|Yes| TRANSFER_PREM[Transfer Premium to Vault]
-    TRANSFER_PREM --> CREATE_POLICY[Create Policy (box/state)]
+    TRANSFER_PREM --> CREATE_POLICY["Create Policy (box-state)"]
     CREATE_POLICY --> MINT_NFT[Create Policy NFT ASA]
     MINT_NFT --> FREEZE_NFT[Opt-in soulbound NFT]
     FREEZE_NFT --> DONE4([Policy Active])

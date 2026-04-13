@@ -8,7 +8,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
+import { SiX } from "react-icons/si";
 
 function Footerdemo() {
   return (
@@ -103,7 +104,7 @@ function Footerdemo() {
                         size="icon"
                         className="rounded-full text-blue-400 border-blue-400 bg-black"
                       >
-                        <Facebook className="h-4 w-4" />
+                        <FaFacebookF className="h-4 w-4" />
                         <span className="sr-only">Facebook</span>
                       </Button>
                     </TooltipTrigger>
@@ -121,12 +122,12 @@ function Footerdemo() {
                         size="icon"
                         className="rounded-full text-blue-400 border-blue-400 bg-black"
                       >
-                        <Twitter className="h-4 w-4" />
-                        <span className="sr-only">Twitter</span>
+                        <SiX className="h-4 w-4" />
+                        <span className="sr-only">X</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Follow us on Twitter</p>
+                      <p>Follow us on X</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -139,7 +140,7 @@ function Footerdemo() {
                         size="icon"
                         className="rounded-full text-blue-400 border-blue-400 bg-black"
                       >
-                        <Instagram className="h-4 w-4" />
+                        <FaInstagram className="h-4 w-4" />
                         <span className="sr-only">Instagram</span>
                       </Button>
                     </TooltipTrigger>
@@ -157,7 +158,7 @@ function Footerdemo() {
                         size="icon"
                         className="rounded-full text-blue-400 border-blue-400 bg-black"
                       >
-                        <Linkedin className="h-4 w-4" />
+                        <FaLinkedinIn className="h-4 w-4" />
                         <span className="sr-only">LinkedIn</span>
                       </Button>
                     </TooltipTrigger>
