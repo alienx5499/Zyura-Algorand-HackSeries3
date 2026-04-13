@@ -368,16 +368,20 @@ describe('security / initialization and admin boundaries', () => {
       defaultSender: ctx.user.addr,
     });
 
-    await expect(
-      userClient.send.call({
+    let unauthorizedRejected = false;
+    try {
+      await userClient.send.call({
         method: 'withdrawLiquidity',
         args: [ctx.liquidityProvider.addr, BigInt(1 * 1e6)],
         populateAppCallResources: false,
         boxReferences: getWithdrawLiquidityBoxReferences(ctx.liquidityProvider.addr),
         assetReferences: [ctx.usdcMint],
         accountReferences: [ctx.vault.addr, ctx.liquidityProvider.addr],
-      })
-    ).rejects.toThrow();
+      });
+    } catch {
+      unauthorizedRejected = true;
+    }
+    expect(unauthorizedRejected).toBe(true);
   });
 
   test('processPayout cannot be invoked twice for the same policy', async () => {
@@ -413,9 +417,15 @@ describe('security / initialization and admin boundaries', () => {
       appId: ctx.appId,
       defaultSender: ctx.user.addr,
     });
+    const status = await ctx.algorand.client.algod.status().do();
+    const lastRound = Number(status['last-round'] ?? 0);
+    const block = await ctx.algorand.client.algod.block(lastRound).do();
+    const chainNow = BigInt(Number(block?.block?.ts ?? 0));
+    const departureTime = chainNow > BigInt(3600) ? chainNow - BigInt(3600) : BigInt(0);
+
     await userClient.send.call({
       method: 'purchasePolicy',
-      args: [premiumPayment, policyId, PRODUCT_ID, FLIGHT_NUMBER, DEPARTURE_TIME, premiumAmount, false, '', BigInt(0)],
+      args: [premiumPayment, policyId, PRODUCT_ID, FLIGHT_NUMBER, departureTime, premiumAmount, false, '', BigInt(0)],
       populateAppCallResources: false,
       boxReferences: getPurchasePolicyBoxReferences(PRODUCT_ID, policyId),
     });
@@ -430,15 +440,19 @@ describe('security / initialization and admin boundaries', () => {
       accountReferences: [ctx.vault.addr, ctx.user.addr],
     });
 
-    await expect(
-      adminClient.send.call({
+    let secondPayoutRejected = false;
+    try {
+      await adminClient.send.call({
         method: 'processPayout',
         args: [policyId, delayOk],
         populateAppCallResources: false,
         boxReferences: getProcessPayoutBoxReferences(policyId),
         assetReferences: [ctx.usdcMint],
         accountReferences: [ctx.vault.addr, ctx.user.addr],
-      })
-    ).rejects.toThrow();
+      });
+    } catch {
+      secondPayoutRejected = true;
+    }
+    expect(secondPayoutRejected).toBe(true);
   });
 });
