@@ -43,6 +43,7 @@ import {
   toSafeNumber,
 } from "@/lib/dashboard/policy-utils";
 import { useDashboardSectionNavigation } from "@/lib/dashboard/use-dashboard-section-navigation";
+import { usePnrLookup } from "@/lib/dashboard/use-pnr-lookup";
 import type { LastPurchaseTx } from "@/lib/dashboard/types";
 import { githubNftPathPublic } from "@/lib/github-metadata-paths";
 import {
@@ -274,49 +275,15 @@ export default function DashboardPage() {
     backfillGroupId();
   }, [lastPurchaseTx]);
 
-  // Auto-fetch PNR data when user enters 6-character PNR
-  useEffect(() => {
-    if (!pnr || pnr.length !== 6) {
-      setFetchedPassenger(null);
-      setPnrStatus(null);
-      return;
-    }
-
-    const fetchPnrData = async () => {
-      setIsFetchingPnr(true);
-      setPnrStatus("fetching");
-      try {
-        const response = await fetch(
-          `/api/zyura/pnr/search?pnr=${encodeURIComponent(pnr)}`,
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.flight_number) setFlightNumber(data.flight_number);
-          if (data.date) setDepartureDate(data.date);
-          if (data.scheduled_departure_unix) {
-            const depDate = new Date(data.scheduled_departure_unix * 1000);
-            const hours = String(depDate.getUTCHours()).padStart(2, "0");
-            const minutes = String(depDate.getUTCMinutes()).padStart(2, "0");
-            setDepartureTime(`${hours}:${minutes}`);
-          }
-          if (data.passenger) {
-            setFetchedPassenger(data.passenger);
-          }
-          setPnrStatus("found");
-          toast.success("PNR found! Details auto-filled.");
-        } else {
-          setPnrStatus("not-found");
-        }
-      } catch (error) {
-        console.error("Error fetching PNR:", error);
-        setPnrStatus("not-found");
-      } finally {
-        setIsFetchingPnr(false);
-      }
-    };
-
-    fetchPnrData();
-  }, [pnr]);
+  usePnrLookup({
+    pnr,
+    setFlightNumber,
+    setDepartureDate,
+    setDepartureTime,
+    setFetchedPassenger,
+    setPnrStatus,
+    setIsFetchingPnr,
+  });
 
   const fetchProducts = async () => {
     try {
