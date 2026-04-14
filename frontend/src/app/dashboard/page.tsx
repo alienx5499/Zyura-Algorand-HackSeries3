@@ -42,6 +42,7 @@ import {
   normalizePolicyStatusLoose,
   toSafeNumber,
 } from "@/lib/dashboard/policy-utils";
+import { useDashboardData } from "@/lib/dashboard/use-dashboard-data";
 import { useDashboardSectionNavigation } from "@/lib/dashboard/use-dashboard-section-navigation";
 import { usePnrLookup } from "@/lib/dashboard/use-pnr-lookup";
 import type { LastPurchaseTx } from "@/lib/dashboard/types";
@@ -98,19 +99,28 @@ export default function DashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const purchaseInFlightRef = useRef(false);
   const [isOptingInUsdc, setIsOptingInUsdc] = useState(false);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
   const [isUsdcOptedIn, setIsUsdcOptedIn] = useState<boolean | null>(null);
   const [lastPurchaseTx, setLastPurchaseTx] = useState<LastPurchaseTx | null>(
     null,
   );
 
   // Data state
-  const [products, setProducts] = useState<Array<{ id: string }>>([]);
-  const [selectedProductInfo, setSelectedProductInfo] = useState<any | null>(
-    null,
-  );
-  const [myPolicies, setMyPolicies] = useState<any[]>([]);
+  const {
+    isLoadingProducts,
+    isLoadingPolicies,
+    products,
+    selectedProductInfo,
+    myPolicies,
+    policiesFetchError,
+    fetchProducts,
+    fetchMyPolicies,
+    showProductById,
+    resetPoliciesState,
+  } = useDashboardData({
+    address,
+    productId,
+    setProductId,
+  });
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [policyModalData, setPolicyModalData] = useState<any>(null);
   const [fetchedPassenger, setFetchedPassenger] = useState<any | null>(null);
@@ -120,9 +130,6 @@ export default function DashboardPage() {
   >(null);
   const { activeSection } = useDashboardSectionNavigation();
   const [showAllPolicies, setShowAllPolicies] = useState(false);
-  const [policiesFetchError, setPoliciesFetchError] = useState<string | null>(
-    null,
-  );
   const isMainnet = process.env.NEXT_PUBLIC_ALGOD_NETWORK === "mainnet";
   const peraExplorerBase = getPeraExplorerBase(isMainnet);
   const txExplorerUrl = getTxExplorerUrl(
@@ -216,11 +223,16 @@ export default function DashboardPage() {
       fetchMyPolicies();
       fetchUsdcOptInStatus();
     } else {
-      setMyPolicies([]);
-      setPoliciesFetchError(null);
+      resetPoliciesState();
       setIsUsdcOptedIn(null);
     }
-  }, [walletInitComplete, isConnected, address]);
+  }, [
+    walletInitComplete,
+    isConnected,
+    address,
+    fetchMyPolicies,
+    resetPoliciesState,
+  ]);
 
   useEffect(() => {
     // Confirmation card is session-scoped: reset when wallet/account changes.
@@ -284,102 +296,6 @@ export default function DashboardPage() {
     setPnrStatus,
     setIsFetchingPnr,
   });
-
-  const fetchProducts = async () => {
-    try {
-      setIsLoadingProducts(true);
-      // Algorand stub: expose Zyura product IDs [1..5] without on-chain reads.
-      const mapped = ["1", "2", "3", "4", "5"].map((id) => ({ id }));
-      setProducts(mapped);
-      if (!productId && mapped.length > 0) {
-        const firstId = mapped[0].id;
-        setProductId(firstId);
-        await showProductById(firstId);
-      }
-    } catch (e: any) {
-      console.error(e);
-      toast.error("Failed to load products", { description: e.message });
-    } finally {
-      setIsLoadingProducts(false);
-    }
-  };
-
-  const fetchMyPolicies = async (bypassCache = false) => {
-    const walletAddress =
-      address && typeof address === "string" ? address.trim() : "";
-    if (!walletAddress) {
-      setMyPolicies([]);
-      setPoliciesFetchError(null);
-      setIsLoadingPolicies(false);
-      return;
-    }
-
-    setIsLoadingPolicies(true);
-    setPoliciesFetchError(null);
-    try {
-      const cacheParam = bypassCache ? "?noCache=true" : "";
-      const response = await fetch(
-        `/api/zyura/policies/${encodeURIComponent(walletAddress)}${cacheParam}`,
-      );
-      if (!response.ok) {
-        const errBody = await response.json().catch(() => ({}));
-        const errMsg =
-          (errBody as { error?: string })?.error ||
-          response.statusText ||
-          "Failed to fetch policies";
-        console.error("Failed to fetch policies:", response.status, errMsg);
-        setPoliciesFetchError(errMsg);
-        setMyPolicies([]);
-        return;
-      }
-
-      const data = await response.json();
-      setMyPolicies(data.policies || []);
-    } catch (error: any) {
-      console.error("Error fetching policies:", error);
-      setPoliciesFetchError(
-        error?.message || "Network error. Please try again.",
-      );
-      setMyPolicies([]);
-    } finally {
-      setIsLoadingPolicies(false);
-    }
-  };
-
-  const showProductById = async (id: string) => {
-    try {
-      const idNum = parseInt(id, 10);
-      if (Number.isNaN(idNum)) return;
-
-      // Fetch product data from Algorand chain
-      const response = await fetch(`/api/zyura/product/${id}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch product: ${response.statusText}`);
-      }
-
-      const productData = await response.json();
-
-      setSelectedProductInfo({
-        id: idNum,
-        product_id: idNum,
-        delay_threshold_minutes:
-          parseInt(productData.delay_threshold_minutes || "0", 10) || undefined,
-        coverage_amount: productData.coverage_amount || "0", // Keep as string for ProductStatsCard to parse
-        premium_rate_bps:
-          parseInt(productData.premium_rate_bps || "0", 10) || undefined,
-        claim_window_hours:
-          parseInt(productData.claim_window_hours || "0", 10) || undefined,
-        active: productData.active === true,
-      });
-    } catch (error: any) {
-      console.error("Error fetching product:", error);
-      toast.error("Failed to load product details", {
-        description: error.message,
-      });
-      // Fallback to empty state
-      setSelectedProductInfo(null);
-    }
-  };
 
   const handleOptInUsdc = async () => {
     const currentAddress = address;
