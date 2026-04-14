@@ -42,6 +42,7 @@ import {
   normalizePolicyStatusLoose,
   toSafeNumber,
 } from "@/lib/dashboard/policy-utils";
+import { useDashboardSectionNavigation } from "@/lib/dashboard/use-dashboard-section-navigation";
 import type { LastPurchaseTx } from "@/lib/dashboard/types";
 import { githubNftPathPublic } from "@/lib/github-metadata-paths";
 import {
@@ -116,7 +117,7 @@ export default function DashboardPage() {
   const [pnrStatus, setPnrStatus] = useState<
     "fetching" | "found" | "not-found" | null
   >(null);
-  const [activeSection, setActiveSection] = useState<string>("dashboard");
+  const { activeSection } = useDashboardSectionNavigation();
   const [showAllPolicies, setShowAllPolicies] = useState(false);
   const [policiesFetchError, setPoliciesFetchError] = useState<string | null>(
     null,
@@ -272,78 +273,6 @@ export default function DashboardPage() {
     };
     backfillGroupId();
   }, [lastPurchaseTx]);
-
-  // Scroll spy to track active section
-  useEffect(() => {
-    const handleScroll = () => {
-      const sections = ["dashboard", "buy", "policies"];
-      const scrollPosition = window.scrollY + 150; // Offset for navbar
-
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const section = document.getElementById(sections[i]);
-        if (section) {
-          const offsetTop = section.offsetTop;
-          if (scrollPosition >= offsetTop) {
-            setActiveSection(sections[i]);
-            break;
-          }
-        }
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    handleScroll(); // Check on mount
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Handle hash navigation on mount and when navigating from other pages
-  useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    if (hash && ["dashboard", "buy", "policies"].includes(hash)) {
-      setTimeout(() => {
-        const element = document.getElementById(hash);
-        if (element) {
-          const offset = 120; // Navbar height + padding
-          const elementPosition =
-            element.getBoundingClientRect().top + window.pageYOffset;
-          const offsetPosition = elementPosition - offset;
-
-          window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth",
-          });
-          setActiveSection(hash);
-        }
-      }, 300); // Wait for page to render
-    }
-  }, []);
-
-  // Listen for hash changes (e.g., browser back/forward)
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.slice(1);
-      if (hash && ["dashboard", "buy", "policies"].includes(hash)) {
-        setTimeout(() => {
-          const element = document.getElementById(hash);
-          if (element) {
-            const offset = 120;
-            const elementPosition =
-              element.getBoundingClientRect().top + window.pageYOffset;
-            const offsetPosition = elementPosition - offset;
-            window.scrollTo({
-              top: offsetPosition,
-              behavior: "smooth",
-            });
-            setActiveSection(hash);
-          }
-        }, 100);
-      }
-    };
-
-    window.addEventListener("hashchange", handleHashChange);
-    return () => window.removeEventListener("hashchange", handleHashChange);
-  }, []);
 
   // Auto-fetch PNR data when user enters 6-character PNR
   useEffect(() => {
