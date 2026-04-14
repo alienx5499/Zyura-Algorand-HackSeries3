@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unstable_cache } from "next/cache";
 import { githubFlightPath } from "@/lib/github-metadata-paths";
 
 const FLIGHT_REPO =
@@ -8,6 +9,58 @@ const FLIGHT_REPO =
 const GITHUB_BRANCH =
   process.env.GITHUB_FLIGHT_BRANCH || process.env.GITHUB_BRANCH || "main";
 const FLIGHT_PATH = githubFlightPath();
+
+const getFlightFolderNamesCached = unstable_cache(
+  async (): Promise<string[]> => {
+    const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
+    const flightsDirUrl = `https://api.github.com/repos/${FLIGHT_REPO}/contents/${FLIGHT_PATH}?ref=${GITHUB_BRANCH}`;
+    const baseHeaders: HeadersInit = {
+      Accept: "application/vnd.github.v3+json",
+    };
+
+    let dirResponse = await fetch(flightsDirUrl, {
+      headers: baseHeaders,
+      next: { revalidate: 120 },
+    });
+
+    if (
+      !dirResponse.ok &&
+      (dirResponse.status === 401 || dirResponse.status === 403) &&
+      GITHUB_TOKEN
+    ) {
+      dirResponse = await fetch(flightsDirUrl, {
+        headers: {
+          ...baseHeaders,
+          Authorization: `Bearer ${GITHUB_TOKEN}`,
+        },
+        next: { revalidate: 120 },
+      });
+      if (!dirResponse.ok && dirResponse.status === 401 && GITHUB_TOKEN) {
+        dirResponse = await fetch(flightsDirUrl, {
+          headers: {
+            ...baseHeaders,
+            Authorization: `token ${GITHUB_TOKEN}`,
+          },
+          next: { revalidate: 120 },
+        });
+      }
+    }
+
+    if (!dirResponse.ok) {
+      throw new Error(
+        `GitHub directory ${dirResponse.status}: ${dirResponse.statusText}`,
+      );
+    }
+
+    const flightFolders: unknown = await dirResponse.json();
+    if (!Array.isArray(flightFolders)) return [];
+    return flightFolders
+      .filter((f: any) => f?.type === "dir" && typeof f?.name === "string")
+      .map((f: any) => f.name as string);
+  },
+  ["zyura-pnr-flight-folders", FLIGHT_REPO, GITHUB_BRANCH, FLIGHT_PATH],
+  { revalidate: 120 },
+);
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,84 +73,32 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const GITHUB_TOKEN = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
-
-    // Note: Since the repo is public, we try without authentication first
-    // Token is only used if we get rate limited or if the unauthenticated request fails
-
     const pnrUpper = pnr.toUpperCase();
 
-    // New structure: Search through all flight.json files for PNR
-    // List all flight folders under FLIGHT_PATH - try without auth first (public repo)
-    const flightsDirUrl = `https://api.github.com/repos/${FLIGHT_REPO}/contents/${FLIGHT_PATH}?ref=${GITHUB_BRANCH}`;
-    const baseHeaders: HeadersInit = {
-      Accept: "application/vnd.github.v3+json",
-    };
-
-    let flightFolders: any[] = [];
-    let folders: any[] = [];
-
-    // Try without authentication first (since repo is public)
-    let dirResponse = await fetch(flightsDirUrl, {
-      headers: baseHeaders,
-      cache: "no-store",
-    });
-
-    // If unauthenticated fails with 401 or 403, try with token
-    if (
-      !dirResponse.ok &&
-      (dirResponse.status === 401 || dirResponse.status === 403) &&
-      GITHUB_TOKEN
-    ) {
-      // Try with Bearer token format (preferred)
-      dirResponse = await fetch(flightsDirUrl, {
-        headers: {
-          ...baseHeaders,
-          Authorization: `Bearer ${GITHUB_TOKEN}`,
-        },
-        cache: "no-store",
-      });
-
-      // If Bearer fails, try with token format (legacy)
-      if (!dirResponse.ok && dirResponse.status === 401 && GITHUB_TOKEN) {
-        dirResponse = await fetch(flightsDirUrl, {
-          headers: {
-            ...baseHeaders,
-            Authorization: `token ${GITHUB_TOKEN}`,
-          },
-          cache: "no-store",
-        });
-      }
-    }
-
-    if (dirResponse.ok) {
-      flightFolders = await dirResponse.json();
-      folders = Array.isArray(flightFolders)
-        ? flightFolders.filter((f: any) => f.type === "dir")
-        : [];
-    } else {
-      // If all attempts fail, return error
-      const errorText = await dirResponse.text().catch(() => "Unknown error");
-      console.error(
-        `GitHub API failed (${dirResponse.status}): ${dirResponse.statusText}`,
-        errorText.substring(0, 200),
-      );
+    let folderNames: string[];
+    try {
+      folderNames = await getFlightFolderNamesCached();
+    } catch (e: any) {
+      console.error("GitHub flight folder list failed:", e?.message || e);
       return NextResponse.json(
         {
           error: "Unable to access flight metadata repository",
-          details: `GitHub API returned ${dirResponse.status}: ${dirResponse.statusText}`,
+          details: e?.message || "Unknown error",
         },
         { status: 503 },
       );
     }
 
-    // Fetch all flight.json in parallel (was sequential — major speedup)
+    if (folderNames.length === 0) {
+      return NextResponse.json({ error: "PNR not found" }, { status: 404 });
+    }
+
     const flightResults = await Promise.all(
-      folders.map(async (folder: any) => {
+      folderNames.map(async (name) => {
         try {
-          const flightFileUrl = `https://raw.githubusercontent.com/${FLIGHT_REPO}/${GITHUB_BRANCH}/${FLIGHT_PATH}/${folder.name}/flight.json`;
+          const flightFileUrl = `https://raw.githubusercontent.com/${FLIGHT_REPO}/${GITHUB_BRANCH}/${FLIGHT_PATH}/${name}/flight.json`;
           const flightResponse = await fetch(flightFileUrl, {
-            cache: "no-store",
+            next: { revalidate: 120 },
           });
           if (!flightResponse.ok) return null;
           const flightData = await flightResponse.json();
@@ -146,7 +147,7 @@ export async function GET(req: NextRequest) {
           }
         : null;
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         pnr: pnrUpper,
         flight_number: flightData.flight_number,
         date: flightData.date || "",
@@ -163,6 +164,11 @@ export async function GET(req: NextRequest) {
         nft_metadata_url: matchingPnr.nft_metadata_url,
         as_of: Math.floor(Date.now() / 1000),
       });
+      res.headers.set(
+        "Cache-Control",
+        "private, s-maxage=60, stale-while-revalidate=120",
+      );
+      return res;
     }
 
     return NextResponse.json({ error: "PNR not found" }, { status: 404 });
