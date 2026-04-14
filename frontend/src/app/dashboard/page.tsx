@@ -30,12 +30,8 @@ import {
   fetchAlgorandSuggestedParams,
   readApiJsonBody,
 } from "@/lib/dashboard/algorand-utils";
-import {
-  getGroupExplorerUrl,
-  getPeraExplorerBase,
-  getTxExplorerUrl,
-} from "@/lib/dashboard/explorer-utils";
 import { useDashboardData } from "@/lib/dashboard/use-dashboard-data";
+import { useLastPurchaseTx } from "@/lib/dashboard/use-last-purchase-tx";
 import { usePolicyModal } from "@/lib/dashboard/use-policy-modal";
 import { useDashboardSectionNavigation } from "@/lib/dashboard/use-dashboard-section-navigation";
 import { usePnrLookup } from "@/lib/dashboard/use-pnr-lookup";
@@ -92,9 +88,13 @@ export default function DashboardPage() {
   const [showBuyForm, setShowBuyForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const purchaseInFlightRef = useRef(false);
-  const [lastPurchaseTx, setLastPurchaseTx] = useState<LastPurchaseTx | null>(
-    null,
-  );
+  const {
+    lastPurchaseTx,
+    setLastPurchaseTx,
+    peraExplorerBase,
+    txExplorerUrl,
+    groupExplorerUrl,
+  } = useLastPurchaseTx({ address });
 
   // Data state
   const {
@@ -113,16 +113,6 @@ export default function DashboardPage() {
     productId,
     setProductId,
   });
-  const isMainnet = process.env.NEXT_PUBLIC_ALGOD_NETWORK === "mainnet";
-  const peraExplorerBase = getPeraExplorerBase(isMainnet);
-  const txExplorerUrl = getTxExplorerUrl(
-    peraExplorerBase,
-    lastPurchaseTx?.txId,
-  );
-  const groupExplorerUrl = getGroupExplorerUrl(
-    peraExplorerBase,
-    lastPurchaseTx?.groupId,
-  );
   const {
     showPolicyModal,
     policyModalData,
@@ -220,59 +210,6 @@ export default function DashboardPage() {
     resetPoliciesState,
     setIsUsdcOptedIn,
   ]);
-
-  useEffect(() => {
-    // Confirmation card is session-scoped: reset when wallet/account changes.
-    setLastPurchaseTx(null);
-  }, [address]);
-
-  useEffect(() => {
-    const backfillGroupId = async () => {
-      if (!lastPurchaseTx?.txId || lastPurchaseTx.groupId) return;
-      try {
-        const txInfoRes = await fetch(
-          `/api/algorand/tx/${lastPurchaseTx.txId}`,
-        );
-        if (!txInfoRes.ok) return;
-        const txInfo = (await txInfoRes.json()) as any;
-        const rawGroup =
-          txInfo?.txn?.txn?.grp ||
-          txInfo?.txn?.grp ||
-          txInfo?.group ||
-          txInfo?.groupId;
-
-        let derivedGroupId: string | undefined;
-        if (typeof rawGroup === "string") {
-          derivedGroupId = rawGroup;
-        } else if (Array.isArray(rawGroup)) {
-          derivedGroupId = Buffer.from(new Uint8Array(rawGroup)).toString(
-            "base64",
-          );
-        } else if (
-          rawGroup &&
-          typeof rawGroup === "object" &&
-          Object.keys(rawGroup).length > 0
-        ) {
-          const values = Object.values(rawGroup).map((v) => Number(v));
-          if (values.every((v) => Number.isFinite(v))) {
-            derivedGroupId = Buffer.from(new Uint8Array(values)).toString(
-              "base64",
-            );
-          }
-        }
-        if (!derivedGroupId) return;
-
-        const updatedSnapshot: LastPurchaseTx = {
-          ...lastPurchaseTx,
-          groupId: derivedGroupId,
-        };
-        setLastPurchaseTx(updatedSnapshot);
-      } catch {
-        // best-effort only
-      }
-    };
-    backfillGroupId();
-  }, [lastPurchaseTx]);
 
   usePnrLookup({
     pnr,
