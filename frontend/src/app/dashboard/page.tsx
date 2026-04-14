@@ -7,13 +7,8 @@ import {
   Plane,
   ShieldCheck,
   Clock,
-  FileText,
-  Plus,
-  ChevronDown,
   AlertCircle,
   CheckCircle2,
-  ExternalLink,
-  Copy,
 } from "lucide-react";
 import { Navbar1 } from "@/components/ui/navbar-1";
 import { useAlgorandWallet } from "@/contexts/WalletConnectionProvider";
@@ -22,13 +17,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import algosdk from "algosdk";
 
 // Import new components
-import { PolicyCard } from "@/components/dashboard/PolicyCard";
-import { SkeletonCard } from "@/components/dashboard/SkeletonCard";
-import { EmptyState } from "@/components/dashboard/EmptyState";
+import { BuyInsuranceHeader } from "@/components/dashboard/BuyInsuranceHeader";
 import { FormField } from "@/components/dashboard/FormField";
-import { ProductStatsCard } from "@/components/dashboard/ProductStatsCard";
+import { HowItWorksCard } from "@/components/dashboard/HowItWorksCard";
+import { MyPoliciesSection } from "@/components/dashboard/MyPoliciesSection";
+import { ProductDetailsPanel } from "@/components/dashboard/ProductDetailsPanel";
 import { PolicyModal } from "@/components/dashboard/PolicyModal";
 import { InteractiveTutorial } from "@/components/dashboard/InteractiveTutorial";
+import { PurchaseConfirmationCard } from "@/components/dashboard/PurchaseConfirmationCard";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { githubNftPathPublic } from "@/lib/github-metadata-paths";
 import {
@@ -1730,96 +1726,34 @@ export default function DashboardPage() {
                   inactiveZone={0.01}
                   borderWidth={3}
                 />
-                <Card className="relative overflow-hidden rounded-xl border-[0.75px] border-gray-800 bg-black">
-                  <CardContent className="p-4 md:p-5">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div className="min-w-0">
-                        <div className="mb-1 flex items-center gap-2">
-                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                          <p className="text-sm font-semibold text-emerald-300">
-                            Purchase confirmed on-chain
-                          </p>
-                        </div>
-                        <p className="text-sm text-gray-300">
-                          Policy #{lastPurchaseTx.policyId}
-                          {lastPurchaseTx.nftAssetId
-                            ? ` · NFT ASA ${lastPurchaseTx.nftAssetId}`
-                            : ""}
-                          {" · "}
-                          {new Date(
-                            lastPurchaseTx.purchasedAtIso,
-                          ).toLocaleString()}
-                        </p>
-                        {!lastPurchaseTx.groupId && (
-                          <p className="mt-1 truncate text-xs text-gray-400">
-                            Tx: {lastPurchaseTx.txId}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {lastPurchaseTx.groupId ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(
-                                    lastPurchaseTx.groupId!,
-                                  );
-                                  toast.success("Group ID copied");
-                                } catch {
-                                  toast.error("Failed to copy Group ID");
-                                }
-                              }}
-                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-700 bg-black px-3 py-2 text-sm text-gray-200 transition-colors hover:border-gray-600 hover:text-white"
-                            >
-                              <Copy className="h-4 w-4" />
-                              Copy Group ID
-                            </button>
-                            <a
-                              href={groupExplorerUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              View full atomic group
-                            </a>
-                          </>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  await navigator.clipboard.writeText(
-                                    lastPurchaseTx.txId,
-                                  );
-                                  toast.success("Transaction ID copied");
-                                } catch {
-                                  toast.error("Failed to copy transaction ID");
-                                }
-                              }}
-                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-700 bg-black px-3 py-2 text-sm text-gray-200 transition-colors hover:border-gray-600 hover:text-white"
-                            >
-                              <Copy className="h-4 w-4" />
-                              Copy Tx
-                            </button>
-                            <a
-                              href={txExplorerUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              View on Explorer
-                            </a>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <PurchaseConfirmationCard
+                  policyId={lastPurchaseTx.policyId}
+                  nftAssetId={lastPurchaseTx.nftAssetId}
+                  purchasedAtIso={lastPurchaseTx.purchasedAtIso}
+                  txId={lastPurchaseTx.txId}
+                  groupId={lastPurchaseTx.groupId}
+                  txExplorerUrl={txExplorerUrl}
+                  groupExplorerUrl={groupExplorerUrl}
+                  onCopyGroupId={async () => {
+                    if (!lastPurchaseTx.groupId) return;
+                    try {
+                      await navigator.clipboard.writeText(
+                        lastPurchaseTx.groupId,
+                      );
+                      toast.success("Group ID copied");
+                    } catch {
+                      toast.error("Failed to copy Group ID");
+                    }
+                  }}
+                  onCopyTxId={async () => {
+                    try {
+                      await navigator.clipboard.writeText(lastPurchaseTx.txId);
+                      toast.success("Transaction ID copied");
+                    } catch {
+                      toast.error("Failed to copy transaction ID");
+                    }
+                  }}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -1859,58 +1793,10 @@ export default function DashboardPage() {
                 />
                 <Card className="relative overflow-hidden rounded-xl border-[0.75px] border-gray-800 bg-black">
                   <CardContent className="p-6 md:p-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <motion.div
-                        className="flex items-center gap-3"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2, type: "spring" }}
-                      >
-                        <motion.div
-                          className="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center"
-                          whileHover={{
-                            scale: 1.1,
-                            rotate: [0, -5, 5, -5, 0],
-                            transition: { duration: 0.5 },
-                          }}
-                        >
-                          <ShieldCheck className="w-5 h-5 text-indigo-400" />
-                        </motion.div>
-                        <h2 className="text-2xl font-semibold text-white">
-                          Buy Insurance
-                        </h2>
-                      </motion.div>
-                      <motion.button
-                        onClick={() => setShowBuyForm((s) => !s)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                          showBuyForm
-                            ? "bg-gray-800 border border-gray-700 text-gray-300 hover:text-white"
-                            : "bg-indigo-600 hover:bg-indigo-500 text-white"
-                        }`}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2, type: "spring" }}
-                      >
-                        {showBuyForm ? (
-                          <>
-                            <motion.span
-                              animate={{ rotate: 180 }}
-                              transition={{ duration: 0.3 }}
-                            >
-                              <ChevronDown className="w-4 h-4 inline" />
-                            </motion.span>
-                            Hide Form
-                          </>
-                        ) : (
-                          <>
-                            <Plus className="w-4 h-4 inline" />
-                            Buy Policy
-                          </>
-                        )}
-                      </motion.button>
-                    </div>
+                    <BuyInsuranceHeader
+                      showBuyForm={showBuyForm}
+                      onToggleBuyForm={() => setShowBuyForm((s) => !s)}
+                    />
 
                     <AnimatePresence>
                       {!connected && (
@@ -2559,413 +2445,28 @@ export default function DashboardPage() {
                 </Card>
               </motion.section>
 
-              {/* My Policies Section */}
-              <motion.section
-                id="policies"
-                data-section="policies"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  borderColor:
-                    activeSection === "policies"
-                      ? "rgba(16, 185, 129, 0.5)"
-                      : undefined,
-                }}
-                transition={{
-                  delay: 0.2,
-                  type: "spring",
-                  stiffness: 100,
-                  damping: 15,
-                }}
-                className="relative rounded-[1.25rem] border-[0.75px] border-gray-800 p-2 md:rounded-3xl md:p-3 scroll-mt-32"
-              >
-                <GlowingEffect
-                  spread={40}
-                  glow={true}
-                  disabled={false}
-                  proximity={64}
-                  inactiveZone={0.01}
-                  borderWidth={3}
-                />
-                <Card className="relative overflow-hidden rounded-xl border-[0.75px] border-gray-800 bg-black">
-                  <CardContent className="p-6 md:p-8">
-                    <div className="flex items-center gap-3 mb-6">
-                      <motion.div
-                        className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center"
-                        whileHover={{
-                          scale: 1.1,
-                          rotate: [0, -5, 5, -5, 0],
-                          transition: { duration: 0.5 },
-                        }}
-                      >
-                        <FileText className="w-5 h-5 text-emerald-400" />
-                      </motion.div>
-                      <h2 className="text-2xl font-semibold text-white">
-                        My Policies
-                      </h2>
-                      <AnimatePresence>
-                        {myPolicies.length > 0 && (
-                          <motion.span
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0 }}
-                            transition={{ type: "spring", stiffness: 200 }}
-                            className="ml-auto px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-medium border border-emerald-500/30"
-                          >
-                            {myPolicies.length}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    {!connected ? (
-                      <EmptyState
-                        icon={ShieldCheck}
-                        title="Connect Your Wallet"
-                        description="Connect your wallet to view your insurance policies"
-                      />
-                    ) : policiesFetchError ? (
-                      <EmptyState
-                        icon={AlertCircle}
-                        title="Couldn't load policies"
-                        description={policiesFetchError}
-                        action={{
-                          label: "Try again",
-                          onClick: () => fetchMyPolicies(),
-                        }}
-                      />
-                    ) : isLoadingPolicies ? (
-                      <motion.div
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        {[0, 1, 2, 3].map((i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.1 }}
-                          >
-                            <SkeletonCard />
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                    ) : myPolicies.length === 0 ? (
-                      <EmptyState
-                        icon={FileText}
-                        title="No Policies Yet"
-                        description="Purchase your first flight delay insurance policy to get started"
-                        action={{
-                          label: "Buy Policy",
-                          onClick: () => setShowBuyForm(true),
-                        }}
-                      />
-                    ) : (
-                      <motion.div
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                        initial="hidden"
-                        animate="visible"
-                        variants={{
-                          visible: {
-                            transition: {
-                              staggerChildren: 0.1,
-                            },
-                          },
-                        }}
-                      >
-                        {(showAllPolicies
-                          ? myPolicies
-                          : myPolicies.slice(0, 2)
-                        ).map((p, index) => {
-                          const toNum = (v: any) => {
-                            const n = Number((v ?? 0).toString());
-                            return Number.isFinite(n) ? n : 0;
-                          };
-                          const policyIdRaw = toNum(p.id);
-                          const policyId =
-                            policyIdRaw > 0 ? policyIdRaw : index + 1;
-                          const productIdAttr = toNum(p.product_id);
-                          const dep = toNum(p.departure_time);
-                          const premium6 = toNum(p.premium_paid);
-                          const coverage6 = toNum(p.coverage_amount);
-
-                          let status: "Active" | "PaidOut" | "Expired" =
-                            "Active";
-                          const rawStatus = p.status;
-                          if (typeof rawStatus === "number") {
-                            if (rawStatus === 0) status = "Active";
-                            else if (rawStatus === 1) status = "PaidOut";
-                            else if (rawStatus === 2) status = "Expired";
-                          } else if (rawStatus) {
-                            if (
-                              rawStatus.Active !== undefined ||
-                              rawStatus.active !== undefined
-                            ) {
-                              status = "Active";
-                            } else if (
-                              rawStatus.PaidOut !== undefined ||
-                              rawStatus.paidOut !== undefined ||
-                              rawStatus.paid_out !== undefined
-                            ) {
-                              status = "PaidOut";
-                            } else if (
-                              rawStatus.Expired !== undefined ||
-                              rawStatus.expired !== undefined
-                            ) {
-                              status = "Expired";
-                            } else if (typeof rawStatus === "string") {
-                              const statusStr = rawStatus as string;
-                              if (statusStr.toLowerCase().includes("active"))
-                                status = "Active";
-                              else if (statusStr.toLowerCase().includes("paid"))
-                                status = "PaidOut";
-                              else if (
-                                statusStr.toLowerCase().includes("expired")
-                              )
-                                status = "Expired";
-                            } else {
-                              const keys = Object.keys(rawStatus);
-                              if (keys.length > 0) {
-                                const key = keys[0];
-                                if (key.toLowerCase().includes("active"))
-                                  status = "Active";
-                                else if (key.toLowerCase().includes("paid"))
-                                  status = "PaidOut";
-                                else if (key.toLowerCase().includes("expired"))
-                                  status = "Expired";
-                              }
-                            }
-                          }
-
-                          const departureDateObj =
-                            dep > 0 ? new Date(dep * 1000) : null;
-                          const departureIso =
-                            departureDateObj &&
-                            Number.isFinite(departureDateObj.getTime())
-                              ? departureDateObj.toISOString()
-                              : new Date().toISOString();
-                          const premiumUsd = (
-                            (Number.isFinite(premium6) ? premium6 : 0) /
-                            1_000_000
-                          ).toLocaleString("en-US", {
-                            style: "currency",
-                            currency: "USD",
-                          });
-                          const coverageUsd = (
-                            (Number.isFinite(coverage6) ? coverage6 : 0) /
-                            1_000_000
-                          ).toLocaleString("en-US", {
-                            style: "currency",
-                            currency: "USD",
-                          });
-
-                          const explorerUrl = p.assetId
-                            ? `https://testnet.explorer.perawallet.app/asset/${p.assetId}`
-                            : address
-                              ? `https://testnet.explorer.perawallet.app/address/${address}/`
-                              : "";
-
-                          const cardFlightFromMeta =
-                            p.metadata?.flight ??
-                            p.metadata?.attributes?.find(
-                              (a: any) => a.trait_type === "Flight",
-                            )?.value;
-                          const cardPnrFromMeta =
-                            p.metadata?.pnr ??
-                            p.metadata?.attributes?.find(
-                              (a: any) => a.trait_type === "PNR",
-                            )?.value;
-                          const cardFlightRaw = (
-                            p.flight_number ||
-                            cardFlightFromMeta ||
-                            ""
-                          )
-                            .toString()
-                            .trim();
-                          const cardPnrRaw = (p.pnr ?? cardPnrFromMeta ?? "")
-                            .toString()
-                            .trim();
-                          const cardFlight =
-                            cardFlightRaw && cardFlightRaw !== "N/A"
-                              ? cardFlightRaw
-                              : "";
-                          const cardPnr =
-                            cardPnrRaw && cardPnrRaw !== "N/A"
-                              ? cardPnrRaw
-                              : "";
-
-                          return (
-                            <motion.div
-                              key={`${policyId}-${index}`}
-                              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                              animate={{ opacity: 1, y: 0, scale: 1 }}
-                              transition={{
-                                delay: index * 0.1,
-                                type: "spring",
-                                stiffness: 200,
-                                damping: 20,
-                              }}
-                              whileHover={{ y: -4 }}
-                            >
-                              <PolicyCard
-                                policyId={policyId}
-                                status={status}
-                                productId={productIdAttr}
-                                flight={cardFlight}
-                                pnr={cardPnr || undefined}
-                                departureIso={departureIso}
-                                premiumUsd={premiumUsd}
-                                coverageUsd={coverageUsd}
-                                explorerUrl={explorerUrl}
-                                payoutTxId={p.payoutTxId}
-                                onOpen={() => openPolicyModal(p)}
-                              />
-                            </motion.div>
-                          );
-                        })}
-
-                        {/* Expand/Collapse Button */}
-                        {myPolicies.length > 2 && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.3 }}
-                            className="mt-4 flex justify-center col-span-full"
-                          >
-                            <motion.button
-                              onClick={() =>
-                                setShowAllPolicies(!showAllPolicies)
-                              }
-                              whileHover={{
-                                scale: 1.02,
-                                borderColor: "rgba(99, 102, 241, 0.6)",
-                              }}
-                              whileTap={{ scale: 0.98 }}
-                              className="px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700 text-gray-300 hover:text-white hover:border-indigo-500/50 text-sm font-medium transition-all duration-200 flex items-center gap-2"
-                            >
-                              {showAllPolicies ? (
-                                <>
-                                  <ChevronDown className="w-4 h-4 rotate-180" />
-                                  Show Less
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="w-4 h-4" />
-                                  Show All Policies ({myPolicies.length})
-                                </>
-                              )}
-                            </motion.button>
-                          </motion.div>
-                        )}
-                      </motion.div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.section>
+              <MyPoliciesSection
+                activeSection={activeSection}
+                connected={connected}
+                policiesFetchError={policiesFetchError}
+                fetchMyPolicies={fetchMyPolicies}
+                isLoadingPolicies={isLoadingPolicies}
+                myPolicies={myPolicies}
+                showAllPolicies={showAllPolicies}
+                setShowAllPolicies={setShowAllPolicies}
+                setShowBuyForm={setShowBuyForm}
+                address={address}
+                openPolicyModal={openPolicyModal}
+              />
             </div>
 
             {/* Right Column - Sidebar */}
             <div className="lg:col-span-1 space-y-6">
               {/* Product Details Card */}
-              <AnimatePresence mode="wait">
-                {selectedProductInfo && (
-                  <motion.div
-                    key="product-card"
-                    data-tutorial="product-details"
-                    initial={{ opacity: 0, x: 30, scale: 0.95 }}
-                    animate={{ opacity: 1, x: 0, scale: 1 }}
-                    exit={{ opacity: 0, x: 30, scale: 0.95 }}
-                    transition={{
-                      delay: 0.3,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 20,
-                    }}
-                    whileHover={{ y: -2 }}
-                  >
-                    <ProductStatsCard productInfo={selectedProductInfo} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <ProductDetailsPanel selectedProductInfo={selectedProductInfo} />
 
               {/* Info Card */}
-              <motion.div
-                data-tutorial="how-it-works"
-                initial={{ opacity: 0, x: 30, y: 20 }}
-                animate={{ opacity: 1, x: 0, y: 0 }}
-                transition={{
-                  delay: 0.4,
-                  type: "spring",
-                  stiffness: 100,
-                  damping: 15,
-                }}
-                className="relative rounded-[1.25rem] border-[0.75px] border-gray-800 p-2 md:rounded-3xl md:p-3"
-              >
-                <GlowingEffect
-                  spread={40}
-                  glow={true}
-                  disabled={false}
-                  proximity={64}
-                  inactiveZone={0.01}
-                  borderWidth={3}
-                />
-                <Card className="relative overflow-hidden rounded-xl border-[0.75px] border-gray-800 bg-black">
-                  <CardContent className="p-6">
-                    <motion.h4
-                      className="text-lg font-semibold text-white mb-3 flex items-center gap-2"
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <motion.span
-                        className="w-1 h-5 bg-blue-500 rounded-full"
-                        animate={{
-                          height: [20, 24, 20],
-                          opacity: [1, 0.8, 1],
-                        }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      />
-                      How It Works
-                    </motion.h4>
-                    <motion.ul
-                      className="space-y-3 text-sm text-gray-300"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.6 }}
-                    >
-                      {[
-                        "Select an insurance product and enter your flight details",
-                        "Pay the premium in USDC through your connected wallet",
-                        "Receive a policy NFT as proof of your coverage",
-                        "Get automatic USDC payouts if your flight is delayed beyond the threshold",
-                      ].map((text, index) => (
-                        <motion.li
-                          key={index}
-                          className="flex items-start gap-2"
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.65 + index * 0.1 }}
-                          whileHover={{ x: 5, transition: { duration: 0.2 } }}
-                        >
-                          <motion.span
-                            className="text-indigo-400 mt-1 font-semibold"
-                            whileHover={{ scale: 1.2 }}
-                          >
-                            {index + 1}.
-                          </motion.span>
-                          <span>{text}</span>
-                        </motion.li>
-                      ))}
-                    </motion.ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <HowItWorksCard />
             </div>
           </div>
         </div>
