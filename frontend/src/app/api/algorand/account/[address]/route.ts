@@ -38,11 +38,26 @@ export async function GET(
     const algorand = getAlgorand();
     const info = await algorand.client.algod.accountInformation(address).do();
     const assets = (info.assets ?? []) as Array<{
-      "asset-id"?: number;
-      assetId?: number;
+      "asset-id"?: number | bigint | string;
+      assetId?: number | bigint | string;
     }>;
+
+    const toAssetId = (value: unknown): number | null => {
+      if (typeof value === "number")
+        return Number.isFinite(value) ? value : null;
+      if (typeof value === "bigint") {
+        const asNum = Number(value);
+        return Number.isFinite(asNum) ? asNum : null;
+      }
+      if (typeof value === "string") {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      }
+      return null;
+    };
+
     const assetIds = assets
-      .map((a) => a["asset-id"] ?? a.assetId)
+      .map((a) => toAssetId(a["asset-id"] ?? a.assetId))
       .filter((id): id is number => typeof id === "number" && id > 0);
     return NextResponse.json({
       address,

@@ -12,6 +12,8 @@ import {
   ChevronDown,
   AlertCircle,
   CheckCircle2,
+  ExternalLink,
+  Copy,
 } from "lucide-react";
 import { Navbar1 } from "@/components/ui/navbar-1";
 import { useAlgorandWallet } from "@/contexts/WalletConnectionProvider";
@@ -116,6 +118,28 @@ async function fetchAlgorandSuggestedParams(): Promise<{
 }
 
 export default function DashboardPage() {
+  type LastPurchaseTx = {
+    txId: string;
+    groupId?: string;
+    policyId: string;
+    nftAssetId?: string;
+    purchasedAtIso: string;
+    steps: Array<{
+      txId: string;
+      label: string;
+      type: string;
+      from: string;
+      to: string;
+      summary: string;
+    }>;
+    premiumTransfer?: {
+      txId: string;
+      amountMicro: number;
+      amountUsd: string;
+      receiver: string;
+    };
+  };
+
   const router = useRouter();
   const { address, isConnected, peraWallet } = useAlgorandWallet();
 
@@ -158,6 +182,10 @@ export default function DashboardPage() {
   const [isOptingInUsdc, setIsOptingInUsdc] = useState(false);
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
   const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
+  const [isUsdcOptedIn, setIsUsdcOptedIn] = useState<boolean | null>(null);
+  const [lastPurchaseTx, setLastPurchaseTx] = useState<LastPurchaseTx | null>(
+    null,
+  );
 
   // Data state
   const [products, setProducts] = useState<Array<{ id: string }>>([]);
@@ -177,6 +205,16 @@ export default function DashboardPage() {
   const [policiesFetchError, setPoliciesFetchError] = useState<string | null>(
     null,
   );
+  const isMainnet = process.env.NEXT_PUBLIC_ALGOD_NETWORK === "mainnet";
+  const peraExplorerBase = isMainnet
+    ? "https://explorer.perawallet.app"
+    : "https://testnet.explorer.perawallet.app";
+  const txExplorerUrl = lastPurchaseTx
+    ? `${peraExplorerBase}/tx/${lastPurchaseTx.txId}`
+    : "";
+  const groupExplorerUrl = lastPurchaseTx?.groupId
+    ? `${peraExplorerBase}/tx-group/${lastPurchaseTx.groupId}/`
+    : "";
 
   // Time options for departure time selector
   const timeOptions = React.useMemo(() => {
@@ -221,6 +259,31 @@ export default function DashboardPage() {
     );
   }, [myPolicies, pnr]);
 
+  const fetchUsdcOptInStatus = async () => {
+    if (!address) {
+      setIsUsdcOptedIn(null);
+      return;
+    }
+    const usdcAsaId = Number(process.env.NEXT_PUBLIC_USDC_ASA_ID || "0");
+    if (!usdcAsaId) {
+      setIsUsdcOptedIn(null);
+      return;
+    }
+    try {
+      const acctRes = await fetch(
+        `/api/algorand/account/${encodeURIComponent(address)}`,
+      );
+      if (!acctRes.ok) {
+        setIsUsdcOptedIn(null);
+        return;
+      }
+      const acctData = (await acctRes.json()) as { assetIds?: number[] };
+      setIsUsdcOptedIn((acctData.assetIds ?? []).includes(usdcAsaId));
+    } catch {
+      setIsUsdcOptedIn(null);
+    }
+  };
+
   // Fetch products on mount
   useEffect(() => {
     fetchProducts();
@@ -233,11 +296,66 @@ export default function DashboardPage() {
       address && typeof address === "string" && address.trim().length > 0;
     if (isConnected && hasAddress) {
       fetchMyPolicies();
+      fetchUsdcOptInStatus();
     } else {
       setMyPolicies([]);
       setPoliciesFetchError(null);
+      setIsUsdcOptedIn(null);
     }
   }, [walletInitComplete, isConnected, address]);
+
+  useEffect(() => {
+    // Confirmation card is session-scoped: reset when wallet/account changes.
+    setLastPurchaseTx(null);
+  }, [address]);
+
+  useEffect(() => {
+    const backfillGroupId = async () => {
+      if (!lastPurchaseTx?.txId || lastPurchaseTx.groupId) return;
+      try {
+        const txInfoRes = await fetch(
+          `/api/algorand/tx/${lastPurchaseTx.txId}`,
+        );
+        if (!txInfoRes.ok) return;
+        const txInfo = (await txInfoRes.json()) as any;
+        const rawGroup =
+          txInfo?.txn?.txn?.grp ||
+          txInfo?.txn?.grp ||
+          txInfo?.group ||
+          txInfo?.groupId;
+
+        let derivedGroupId: string | undefined;
+        if (typeof rawGroup === "string") {
+          derivedGroupId = rawGroup;
+        } else if (Array.isArray(rawGroup)) {
+          derivedGroupId = Buffer.from(new Uint8Array(rawGroup)).toString(
+            "base64",
+          );
+        } else if (
+          rawGroup &&
+          typeof rawGroup === "object" &&
+          Object.keys(rawGroup).length > 0
+        ) {
+          const values = Object.values(rawGroup).map((v) => Number(v));
+          if (values.every((v) => Number.isFinite(v))) {
+            derivedGroupId = Buffer.from(new Uint8Array(values)).toString(
+              "base64",
+            );
+          }
+        }
+        if (!derivedGroupId) return;
+
+        const updatedSnapshot: LastPurchaseTx = {
+          ...lastPurchaseTx,
+          groupId: derivedGroupId,
+        };
+        setLastPurchaseTx(updatedSnapshot);
+      } catch {
+        // best-effort only
+      }
+    };
+    backfillGroupId();
+  }, [lastPurchaseTx]);
 
   // Scroll spy to track active section
   useEffect(() => {
@@ -494,6 +612,7 @@ export default function DashboardPage() {
       toast.success("Opt-in successful! You can now purchase with USDC.", {
         description: `Tx: ${String(txId).slice(0, 12)}...`,
       });
+      setIsUsdcOptedIn(true);
     } catch (error: any) {
       console.error("Opt-in error:", error);
       toast.error("Opt-in failed", {
@@ -571,9 +690,6 @@ export default function DashboardPage() {
     const cleanupUploadedFiles = async () => {
       if (uploadedFiles.length === 0) return;
 
-      console.log(
-        "Cleaning up uploaded files (atomic rollback) due to transaction failure...",
-      );
       for (const filePath of uploadedFiles) {
         try {
           const delRes = await fetch("/api/github/delete", {
@@ -584,9 +700,7 @@ export default function DashboardPage() {
               message: `Cleanup: Remove orphaned metadata due to failed transaction`,
             }),
           });
-          if (delRes.ok) {
-            console.log(`Cleaned up: ${filePath}`);
-          } else {
+          if (!delRes.ok) {
             const err = await delRes.json();
             console.warn(
               `Failed to delete ${filePath}:`,
@@ -1086,17 +1200,17 @@ export default function DashboardPage() {
             "Pay premium (USDC)",
             "Register your policy on Zyura",
             "Opt in to policy NFT",
-            "",
+            "Deliver policy NFT",
             "Link policy NFT to your policy",
-            "",
+            "Freeze policy NFT (soulbound)",
           ]
         : [
             "Pay premium (USDC)",
             "Register your policy on Zyura",
             "Opt in to policy NFT",
-            "",
+            "Deliver policy NFT",
             "Link policy NFT to your policy",
-            "",
+            "Freeze policy NFT (soulbound)",
           ];
 
       toast.info(
@@ -1159,8 +1273,8 @@ export default function DashboardPage() {
         const errMsg = error.error || "Failed to send grouped transaction";
         throw new Error(errMsg);
       }
-      const { txId } = await sendRes.json();
-      const groupTxIds = [txId];
+      await sendRes.json();
+      const groupTxIds = built.map((tw) => tw.txn.txID().toString());
 
       {
         toast.info("Waiting for the network to confirm…");
@@ -1192,8 +1306,9 @@ export default function DashboardPage() {
           purchased_at: purchasedIso,
           purchased_at_unix: purchasedUnix,
           description: [
-            `Flight delay cover — ${flightNumber}, departs ${departureIso}. Premium ${premiumUsd}, coverage ${coverageUsd}.`,
+            `Flight delay cover - ${flightNumber}, departs ${departureIso}. Premium ${premiumUsd}, coverage ${coverageUsd}.`,
             `Policy ${policyId} is ACTIVE; policy NFT ASA ${nftAssetId}. Purchased ${purchasedIso}.`,
+            `Policy id ${policyId} (product ${productId}).`,
             `One wallet approval confirmed premium, policy registration, NFT delivery, link, and freeze in one atomic group.`,
             `Authoritative status and payout flags live on-chain (Zyura app ${zyuraAppIdStr}, policy id ${policyId}); this file mirrors that for display.`,
           ].join(" "),
@@ -1211,6 +1326,94 @@ export default function DashboardPage() {
             console.warn("Failed to update metadata with NFT asset ID");
         });
       }
+
+      const stepTxs = built.map((tw, i) => {
+        const t = tw.txn as any;
+        const txType =
+          t.type === "axfer"
+            ? "Asset Transfer"
+            : t.type === "appl"
+              ? "Application Call"
+              : t.type === "afrz"
+                ? "Asset Freeze"
+                : t.type;
+        const label = labels[i] || `Step ${i + 1}`;
+        const appLabel = `App ${appId.toString()}`;
+        const issuerAddr = process.env.ADMIN_ADDRESS || "Issuer";
+        let from = "Wallet";
+        let to = "Wallet";
+        let summary = "On-chain step";
+
+        switch (label) {
+          case "Opt in to USDC":
+            from = currentAddress;
+            to = currentAddress;
+            summary = "Enable USDC for payments (amount 0).";
+            break;
+          case "Pay premium (USDC)":
+            from = currentAddress;
+            to = vaultAddr;
+            summary = `Transfer premium $${(Number(premiumAmountMicro) / 1_000_000).toFixed(2)} tUSDC to vault.`;
+            break;
+          case "Register your policy on Zyura":
+            from = currentAddress;
+            to = appLabel;
+            summary = `Call purchasePolicy for policy ${policyId}.`;
+            break;
+          case "Opt in to policy NFT":
+            from = currentAddress;
+            to = currentAddress;
+            summary = "Enable receiving policy NFT (amount 0).";
+            break;
+          case "Deliver policy NFT":
+            from = issuerAddr;
+            to = currentAddress;
+            summary = "Send 1 policy NFT ASA to wallet.";
+            break;
+          case "Link policy NFT to your policy":
+            from = currentAddress;
+            to = appLabel;
+            summary = "Link NFT ASA id to policy storage.";
+            break;
+          case "Freeze policy NFT (soulbound)":
+            from = issuerAddr;
+            to = currentAddress;
+            summary = "Freeze NFT holding to enforce non-transferability.";
+            break;
+        }
+        return {
+          txId: tw.txn.txID().toString(),
+          label,
+          type: txType || "Transaction",
+          from,
+          to,
+          summary,
+        };
+      });
+      const premiumTransferStep = stepTxs.find(
+        (s) => s.label === "Pay premium (USDC)",
+      );
+      const groupId = built[0]?.txn.group
+        ? Buffer.from(built[0].txn.group).toString("base64")
+        : undefined;
+
+      const purchaseSnapshot: LastPurchaseTx = {
+        txId: groupTxIds[0],
+        groupId,
+        policyId: String(policyId),
+        nftAssetId: nftAssetId ? String(nftAssetId) : undefined,
+        purchasedAtIso: new Date().toISOString(),
+        steps: stepTxs,
+        premiumTransfer: premiumTransferStep
+          ? {
+              txId: premiumTransferStep.txId,
+              amountMicro: Number(premiumAmountMicro),
+              amountUsd: (Number(premiumAmountMicro) / 1_000_000).toFixed(2),
+              receiver: vaultAddr,
+            }
+          : undefined,
+      };
+      setLastPurchaseTx(purchaseSnapshot);
 
       toast.success("You’re covered — policy purchased.", {
         description: nftAssetId
@@ -1434,14 +1637,12 @@ export default function DashboardPage() {
           const metadata = await metadataResponse.json();
           imageUrl = metadata.image || expectedSvgUrl;
           metadataUrl = expectedJsonUrl;
-          console.log("NFT metadata loaded:", expectedJsonUrl);
         } else {
           // Fallback to expected SVG URL
           imageUrl = expectedSvgUrl;
-          console.log("JSON not found, trying SVG directly:", expectedSvgUrl);
         }
       } catch (error) {
-        console.log("Could not fetch NFT metadata, using fallback:", error);
+        console.warn("Could not fetch NFT metadata, using fallback:", error);
         imageUrl = expectedSvgUrl;
       }
     }
@@ -1512,6 +1713,116 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Last Purchase Banner - Shows transaction details after successful purchase */}
+          <AnimatePresence>
+            {lastPurchaseTx && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="mb-6 relative rounded-[1.25rem] border-[0.75px] border-gray-800 p-2 md:rounded-3xl md:p-3"
+              >
+                <GlowingEffect
+                  spread={40}
+                  glow={true}
+                  disabled={false}
+                  proximity={64}
+                  inactiveZone={0.01}
+                  borderWidth={3}
+                />
+                <Card className="relative overflow-hidden rounded-xl border-[0.75px] border-gray-800 bg-black">
+                  <CardContent className="p-4 md:p-5">
+                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="min-w-0">
+                        <div className="mb-1 flex items-center gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                          <p className="text-sm font-semibold text-emerald-300">
+                            Purchase confirmed on-chain
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-300">
+                          Policy #{lastPurchaseTx.policyId}
+                          {lastPurchaseTx.nftAssetId
+                            ? ` · NFT ASA ${lastPurchaseTx.nftAssetId}`
+                            : ""}
+                          {" · "}
+                          {new Date(
+                            lastPurchaseTx.purchasedAtIso,
+                          ).toLocaleString()}
+                        </p>
+                        {!lastPurchaseTx.groupId && (
+                          <p className="mt-1 truncate text-xs text-gray-400">
+                            Tx: {lastPurchaseTx.txId}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {lastPurchaseTx.groupId ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(
+                                    lastPurchaseTx.groupId!,
+                                  );
+                                  toast.success("Group ID copied");
+                                } catch {
+                                  toast.error("Failed to copy Group ID");
+                                }
+                              }}
+                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-700 bg-black px-3 py-2 text-sm text-gray-200 transition-colors hover:border-gray-600 hover:text-white"
+                            >
+                              <Copy className="h-4 w-4" />
+                              Copy Group ID
+                            </button>
+                            <a
+                              href={groupExplorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              View full atomic group
+                            </a>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  await navigator.clipboard.writeText(
+                                    lastPurchaseTx.txId,
+                                  );
+                                  toast.success("Transaction ID copied");
+                                } catch {
+                                  toast.error("Failed to copy transaction ID");
+                                }
+                              }}
+                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-700 bg-black px-3 py-2 text-sm text-gray-200 transition-colors hover:border-gray-600 hover:text-white"
+                            >
+                              <Copy className="h-4 w-4" />
+                              Copy Tx
+                            </button>
+                            <a
+                              href={txExplorerUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-500"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                              View on Explorer
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Main Grid Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
@@ -1660,31 +1971,33 @@ export default function DashboardPage() {
                               damping: 25,
                             }}
                           >
-                            {/* Opt-in to USDC (required before first purchase) */}
-                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex flex-wrap items-center justify-between gap-2">
-                              <p className="text-sm text-amber-200/90">
-                                First time? Your wallet must opt in to USDC
-                                (Testnet) before you can pay the premium.
-                                One-time step.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={handleOptInUsdc}
-                                disabled={
-                                  !connected ||
-                                  !peraWallet ||
-                                  isOptingInUsdc ||
-                                  isSubmitting
-                                }
-                                className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-medium hover:bg-amber-500/30 disabled:opacity-50 transition-colors"
-                              >
-                                {isOptingInUsdc
-                                  ? "Sign in wallet…"
-                                  : !peraWallet
-                                    ? "Loading…"
-                                    : "Opt in to USDC"}
-                              </button>
-                            </div>
+                            {/* Opt-in to USDC (required only if wallet is not opted in) */}
+                            {isUsdcOptedIn === false && (
+                              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex flex-wrap items-center justify-between gap-2">
+                                <p className="text-sm text-amber-200/90">
+                                  First time? Your wallet must opt in to USDC
+                                  (Testnet) before you can pay the premium.
+                                  One-time step.
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={handleOptInUsdc}
+                                  disabled={
+                                    !connected ||
+                                    !peraWallet ||
+                                    isOptingInUsdc ||
+                                    isSubmitting
+                                  }
+                                  className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-200 text-sm font-medium hover:bg-amber-500/30 disabled:opacity-50 transition-colors"
+                                >
+                                  {isOptingInUsdc
+                                    ? "Sign in wallet…"
+                                    : !peraWallet
+                                      ? "Loading…"
+                                      : "Opt in to USDC"}
+                                </button>
+                              </div>
+                            )}
                             {/* Form Fields */}
                             <motion.div
                               className="space-y-4"
@@ -2366,8 +2679,13 @@ export default function DashboardPage() {
                           ? myPolicies
                           : myPolicies.slice(0, 2)
                         ).map((p, index) => {
-                          const toNum = (v: any) => Number((v ?? 0).toString());
-                          const policyId = toNum(p.id);
+                          const toNum = (v: any) => {
+                            const n = Number((v ?? 0).toString());
+                            return Number.isFinite(n) ? n : 0;
+                          };
+                          const policyIdRaw = toNum(p.id);
+                          const policyId =
+                            policyIdRaw > 0 ? policyIdRaw : index + 1;
                           const productIdAttr = toNum(p.product_id);
                           const dep = toNum(p.departure_time);
                           const premium6 = toNum(p.premium_paid);
@@ -2421,17 +2739,23 @@ export default function DashboardPage() {
                             }
                           }
 
-                          const departureIso = new Date(
-                            dep * 1000,
-                          ).toISOString();
+                          const departureDateObj =
+                            dep > 0 ? new Date(dep * 1000) : null;
+                          const departureIso =
+                            departureDateObj &&
+                            Number.isFinite(departureDateObj.getTime())
+                              ? departureDateObj.toISOString()
+                              : new Date().toISOString();
                           const premiumUsd = (
-                            premium6 / 1_000_000
+                            (Number.isFinite(premium6) ? premium6 : 0) /
+                            1_000_000
                           ).toLocaleString("en-US", {
                             style: "currency",
                             currency: "USD",
                           });
                           const coverageUsd = (
-                            coverage6 / 1_000_000
+                            (Number.isFinite(coverage6) ? coverage6 : 0) /
+                            1_000_000
                           ).toLocaleString("en-US", {
                             style: "currency",
                             currency: "USD",
@@ -2474,7 +2798,7 @@ export default function DashboardPage() {
 
                           return (
                             <motion.div
-                              key={policyId}
+                              key={`${policyId}-${index}`}
                               initial={{ opacity: 0, y: 20, scale: 0.95 }}
                               animate={{ opacity: 1, y: 0, scale: 1 }}
                               transition={{
