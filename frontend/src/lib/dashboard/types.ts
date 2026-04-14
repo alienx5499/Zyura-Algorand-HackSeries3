@@ -1,0 +1,21 @@
+export type LastPurchaseTx = {
+  txId: string;
+  groupId?: string;
+  policyId: string;
+  nftAssetId?: string;
+  purchasedAtIso: string;
+  steps: Array<{
+    txId: string;
+    label: string;
+    type: string;
+    from: string;
+    to: string;
+    summary: string;
+  }>;
+  premiumTransfer?: {
+    txId: string;
+    amountMicro: number;
+    amountUsd: string;
+    receiver: string;
+  };
+};
