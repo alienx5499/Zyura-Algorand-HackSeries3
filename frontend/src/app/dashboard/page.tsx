@@ -30,6 +30,18 @@ import {
   fetchAlgorandSuggestedParams,
   readApiJsonBody,
 } from "@/lib/dashboard/algorand-utils";
+import {
+  getAssetOrAddressExplorerUrl,
+  getGroupExplorerUrl,
+  getPeraExplorerBase,
+  getTxExplorerUrl,
+} from "@/lib/dashboard/explorer-utils";
+import {
+  getDisplayFlightAndPnr,
+  microToUsd,
+  normalizePolicyStatusLoose,
+  toSafeNumber,
+} from "@/lib/dashboard/policy-utils";
 import type { LastPurchaseTx } from "@/lib/dashboard/types";
 import { githubNftPathPublic } from "@/lib/github-metadata-paths";
 import {
@@ -110,15 +122,15 @@ export default function DashboardPage() {
     null,
   );
   const isMainnet = process.env.NEXT_PUBLIC_ALGOD_NETWORK === "mainnet";
-  const peraExplorerBase = isMainnet
-    ? "https://explorer.perawallet.app"
-    : "https://testnet.explorer.perawallet.app";
-  const txExplorerUrl = lastPurchaseTx
-    ? `${peraExplorerBase}/tx/${lastPurchaseTx.txId}`
-    : "";
-  const groupExplorerUrl = lastPurchaseTx?.groupId
-    ? `${peraExplorerBase}/tx-group/${lastPurchaseTx.groupId}/`
-    : "";
+  const peraExplorerBase = getPeraExplorerBase(isMainnet);
+  const txExplorerUrl = getTxExplorerUrl(
+    peraExplorerBase,
+    lastPurchaseTx?.txId,
+  );
+  const groupExplorerUrl = getGroupExplorerUrl(
+    peraExplorerBase,
+    lastPurchaseTx?.groupId,
+  );
 
   // Time options for departure time selector
   const timeOptions = React.useMemo(() => {
@@ -1420,94 +1432,33 @@ export default function DashboardPage() {
   };
 
   const openPolicyModal = async (policy: any) => {
-    const toNum = (v: any) => Number((v ?? 0).toString());
-    const policyId = toNum(policy.id);
-    const productIdAttr = toNum(policy.product_id);
-    const dep = toNum(policy.departure_time);
-    const premium6 = toNum(policy.premium_paid);
-    const coverage6 = toNum(policy.coverage_amount);
+    const policyId = toSafeNumber(policy.id);
+    const productIdAttr = toSafeNumber(policy.product_id);
+    const dep = toSafeNumber(policy.departure_time);
+    const premium6 = toSafeNumber(policy.premium_paid);
+    const coverage6 = toSafeNumber(policy.coverage_amount);
 
-    let status = "Active"; // default for policies from API (status 0)
-    const rawStatus = policy.status;
+    let status = normalizePolicyStatusLoose(policy.status);
     const statusFromMeta =
       policy.metadata?.status ??
       policy.metadata?.attributes?.find((a: any) => a.trait_type === "Status")
         ?.value;
-    if (typeof rawStatus === "number") {
-      if (rawStatus === 0) status = "Active";
-      else if (rawStatus === 1) status = "PaidOut";
-      else if (rawStatus === 2) status = "Expired";
-    } else if (statusFromMeta && typeof statusFromMeta === "string") {
-      const s = statusFromMeta.toLowerCase();
-      if (s.includes("active")) status = "Active";
-      else if (s.includes("paid")) status = "PaidOut";
-      else if (s.includes("expired")) status = "Expired";
-      else status = statusFromMeta;
-    } else if (rawStatus && typeof rawStatus === "object") {
-      if (rawStatus.Active !== undefined || rawStatus.active !== undefined)
-        status = "Active";
-      else if (
-        rawStatus.PaidOut !== undefined ||
-        rawStatus.paidOut !== undefined ||
-        rawStatus.paid_out !== undefined
-      )
-        status = "PaidOut";
-      else if (
-        rawStatus.Expired !== undefined ||
-        rawStatus.expired !== undefined
-      )
-        status = "Expired";
-      else if (typeof rawStatus === "string") status = rawStatus;
-      else {
-        const keys = Object.keys(rawStatus);
-        if (keys.length > 0) {
-          const key = keys[0];
-          if (key.toLowerCase().includes("active")) status = "Active";
-          else if (key.toLowerCase().includes("paid")) status = "PaidOut";
-          else if (key.toLowerCase().includes("expired")) status = "Expired";
-          else status = key;
-        }
-      }
-    } else if (typeof rawStatus === "string") {
-      const s = rawStatus.toLowerCase();
-      if (s.includes("active")) status = "Active";
-      else if (s.includes("paid")) status = "PaidOut";
-      else if (s.includes("expired")) status = "Expired";
-      else status = rawStatus;
+    if (statusFromMeta && typeof statusFromMeta === "string") {
+      status = normalizePolicyStatusLoose(statusFromMeta);
     }
 
     const departureIso = new Date(dep * 1000).toISOString();
-    const premiumUsd = (premium6 / 1_000_000).toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
-    const coverageUsd = (coverage6 / 1_000_000).toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-    });
+    const premiumUsd = microToUsd(premium6);
+    const coverageUsd = microToUsd(coverage6);
 
-    const explorerUrl = policy.assetId
-      ? `https://testnet.explorer.perawallet.app/asset/${policy.assetId}`
-      : address
-        ? `https://testnet.explorer.perawallet.app/address/${address}/`
-        : "";
+    const explorerUrl = getAssetOrAddressExplorerUrl(
+      peraExplorerBase,
+      policy.assetId,
+      address,
+    );
 
-    // Prefer flight/PNR from metadata (top-level or legacy attributes)
-    const flightFromMeta =
-      policy.metadata?.flight ??
-      policy.metadata?.attributes?.find((a: any) => a.trait_type === "Flight")
-        ?.value;
-    const pnrFromMeta =
-      policy.metadata?.pnr ??
-      policy.metadata?.attributes?.find((a: any) => a.trait_type === "PNR")
-        ?.value;
-    const flightDisplay = (policy.flight_number || flightFromMeta || "")
-      .toString()
-      .trim();
-    const pnrDisplay = (policy.pnr ?? pnrFromMeta ?? "").toString().trim();
-    const flightValue =
-      flightDisplay && flightDisplay !== "N/A" ? flightDisplay : "";
-    const pnrValue = pnrDisplay && pnrDisplay !== "N/A" ? pnrDisplay : "";
+    const { flight: flightValue, pnr: pnrValue } =
+      getDisplayFlightAndPnr(policy);
 
     // Try to fetch NFT metadata and image
     let imageUrl: string | undefined;
@@ -2363,6 +2314,7 @@ export default function DashboardPage() {
                 showAllPolicies={showAllPolicies}
                 setShowAllPolicies={setShowAllPolicies}
                 setShowBuyForm={setShowBuyForm}
+                peraExplorerBase={peraExplorerBase}
                 address={address}
                 openPolicyModal={openPolicyModal}
               />

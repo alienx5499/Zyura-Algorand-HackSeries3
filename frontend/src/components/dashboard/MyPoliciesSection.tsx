@@ -5,6 +5,13 @@ import { EmptyState } from "@/components/dashboard/EmptyState";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { PolicyCard } from "@/components/dashboard/PolicyCard";
 import { SkeletonCard } from "@/components/dashboard/SkeletonCard";
+import {
+  getDisplayFlightAndPnr,
+  microToUsd,
+  normalizePolicyStatus,
+  toSafeNumber,
+} from "@/lib/dashboard/policy-utils";
+import { getAssetOrAddressExplorerUrl } from "@/lib/dashboard/explorer-utils";
 
 type MyPoliciesSectionProps = {
   activeSection: string;
@@ -16,6 +23,7 @@ type MyPoliciesSectionProps = {
   showAllPolicies: boolean;
   setShowAllPolicies: (value: boolean) => void;
   setShowBuyForm: (value: boolean) => void;
+  peraExplorerBase: string;
   address?: string | null;
   openPolicyModal: (policy: any) => void;
 };
@@ -30,6 +38,7 @@ export function MyPoliciesSection({
   showAllPolicies,
   setShowAllPolicies,
   setShowBuyForm,
+  peraExplorerBase,
   address,
   openPolicyModal,
 }: MyPoliciesSectionProps) {
@@ -147,61 +156,13 @@ export function MyPoliciesSection({
             >
               {(showAllPolicies ? myPolicies : myPolicies.slice(0, 2)).map(
                 (p, index) => {
-                  const toNum = (v: any) => {
-                    const n = Number((v ?? 0).toString());
-                    return Number.isFinite(n) ? n : 0;
-                  };
-                  const policyIdRaw = toNum(p.id);
+                  const policyIdRaw = toSafeNumber(p.id);
                   const policyId = policyIdRaw > 0 ? policyIdRaw : index + 1;
-                  const productIdAttr = toNum(p.product_id);
-                  const dep = toNum(p.departure_time);
-                  const premium6 = toNum(p.premium_paid);
-                  const coverage6 = toNum(p.coverage_amount);
-
-                  let status: "Active" | "PaidOut" | "Expired" = "Active";
-                  const rawStatus = p.status;
-                  if (typeof rawStatus === "number") {
-                    if (rawStatus === 0) status = "Active";
-                    else if (rawStatus === 1) status = "PaidOut";
-                    else if (rawStatus === 2) status = "Expired";
-                  } else if (rawStatus) {
-                    if (
-                      rawStatus.Active !== undefined ||
-                      rawStatus.active !== undefined
-                    ) {
-                      status = "Active";
-                    } else if (
-                      rawStatus.PaidOut !== undefined ||
-                      rawStatus.paidOut !== undefined ||
-                      rawStatus.paid_out !== undefined
-                    ) {
-                      status = "PaidOut";
-                    } else if (
-                      rawStatus.Expired !== undefined ||
-                      rawStatus.expired !== undefined
-                    ) {
-                      status = "Expired";
-                    } else if (typeof rawStatus === "string") {
-                      const statusStr = rawStatus as string;
-                      if (statusStr.toLowerCase().includes("active"))
-                        status = "Active";
-                      else if (statusStr.toLowerCase().includes("paid"))
-                        status = "PaidOut";
-                      else if (statusStr.toLowerCase().includes("expired"))
-                        status = "Expired";
-                    } else {
-                      const keys = Object.keys(rawStatus);
-                      if (keys.length > 0) {
-                        const key = keys[0];
-                        if (key.toLowerCase().includes("active"))
-                          status = "Active";
-                        else if (key.toLowerCase().includes("paid"))
-                          status = "PaidOut";
-                        else if (key.toLowerCase().includes("expired"))
-                          status = "Expired";
-                      }
-                    }
-                  }
+                  const productIdAttr = toSafeNumber(p.product_id);
+                  const dep = toSafeNumber(p.departure_time);
+                  const premium6 = toSafeNumber(p.premium_paid);
+                  const coverage6 = toSafeNumber(p.coverage_amount);
+                  const status = normalizePolicyStatus(p.status);
 
                   const departureDateObj =
                     dep > 0 ? new Date(dep * 1000) : null;
@@ -210,51 +171,16 @@ export function MyPoliciesSection({
                     Number.isFinite(departureDateObj.getTime())
                       ? departureDateObj.toISOString()
                       : new Date().toISOString();
-                  const premiumUsd = (
-                    (Number.isFinite(premium6) ? premium6 : 0) / 1_000_000
-                  ).toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  });
-                  const coverageUsd = (
-                    (Number.isFinite(coverage6) ? coverage6 : 0) / 1_000_000
-                  ).toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  });
+                  const premiumUsd = microToUsd(premium6);
+                  const coverageUsd = microToUsd(coverage6);
 
-                  const explorerUrl = p.assetId
-                    ? `https://testnet.explorer.perawallet.app/asset/${p.assetId}`
-                    : address
-                      ? `https://testnet.explorer.perawallet.app/address/${address}/`
-                      : "";
-
-                  const cardFlightFromMeta =
-                    p.metadata?.flight ??
-                    p.metadata?.attributes?.find(
-                      (a: any) => a.trait_type === "Flight",
-                    )?.value;
-                  const cardPnrFromMeta =
-                    p.metadata?.pnr ??
-                    p.metadata?.attributes?.find(
-                      (a: any) => a.trait_type === "PNR",
-                    )?.value;
-                  const cardFlightRaw = (
-                    p.flight_number ||
-                    cardFlightFromMeta ||
-                    ""
-                  )
-                    .toString()
-                    .trim();
-                  const cardPnrRaw = (p.pnr ?? cardPnrFromMeta ?? "")
-                    .toString()
-                    .trim();
-                  const cardFlight =
-                    cardFlightRaw && cardFlightRaw !== "N/A"
-                      ? cardFlightRaw
-                      : "";
-                  const cardPnr =
-                    cardPnrRaw && cardPnrRaw !== "N/A" ? cardPnrRaw : "";
+                  const explorerUrl = getAssetOrAddressExplorerUrl(
+                    peraExplorerBase,
+                    p.assetId,
+                    address,
+                  );
+                  const { flight: cardFlight, pnr: cardPnr } =
+                    getDisplayFlightAndPnr(p);
 
                   return (
                     <motion.div
