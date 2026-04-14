@@ -1,6 +1,6 @@
-import type { LastPurchaseTx } from "@/lib/dashboard/types";
+import type { LastPurchaseTx, PnrStatus } from "@/lib/dashboard/types";
 
-export type PnrStatus = "fetching" | "found" | "not-found" | null;
+export type { PnrStatus };
 
 export type PurchaseFormState = {
   pnr: string;

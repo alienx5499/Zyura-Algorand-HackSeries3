@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
-
-type PnrStatus = "fetching" | "found" | "not-found" | null;
+import type { PnrStatus } from "@/lib/dashboard/types";
 
 type UsePnrLookupArgs = {
   pnr: string;
@@ -10,7 +9,6 @@ type UsePnrLookupArgs = {
   setDepartureTime: (value: string) => void;
   setFetchedPassenger: (value: any | null) => void;
   setPnrStatus: (value: PnrStatus) => void;
-  setIsFetchingPnr: (value: boolean) => void;
 };
 
 export function usePnrLookup({
@@ -20,7 +18,6 @@ export function usePnrLookup({
   setDepartureTime,
   setFetchedPassenger,
   setPnrStatus,
-  setIsFetchingPnr,
 }: UsePnrLookupArgs) {
   useEffect(() => {
     if (!pnr || pnr.length !== 6) {
@@ -30,7 +27,6 @@ export function usePnrLookup({
     }
 
     const fetchPnrData = async () => {
-      setIsFetchingPnr(true);
       setPnrStatus("fetching");
       try {
         const response = await fetch(
@@ -57,8 +53,6 @@ export function usePnrLookup({
       } catch (error) {
         console.error("Error fetching PNR:", error);
         setPnrStatus("not-found");
-      } finally {
-        setIsFetchingPnr(false);
       }
     };
 
@@ -69,7 +63,6 @@ export function usePnrLookup({
     setDepartureTime,
     setFetchedPassenger,
     setFlightNumber,
-    setIsFetchingPnr,
     setPnrStatus,
   ]);
 }

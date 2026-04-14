@@ -1,3 +1,5 @@
+export type PnrStatus = "fetching" | "found" | "not-found" | null;
+
 export type LastPurchaseTx = {
   txId: string;
   groupId?: string;
