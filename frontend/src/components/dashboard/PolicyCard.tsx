@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Calendar, Plane, DollarSign, ExternalLink } from "lucide-react";
+import { Calendar, Plane, ExternalLink } from "lucide-react";
 
 interface PolicyCardProps {
   policyId: number;

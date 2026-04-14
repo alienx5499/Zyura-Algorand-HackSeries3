@@ -80,7 +80,7 @@ async function listGitHubDirectory(
       files: Array.isArray(data) ? data : [],
       rateLimit,
     };
-  } catch (error) {
+  } catch {
     return { files: [], rateLimit: null };
   }
 }

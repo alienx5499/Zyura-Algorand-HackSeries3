@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       try {
         const error = JSON.parse(responseText);
         errorMessage = error.message || error.text || errorMessage;
-      } catch (e) {
+      } catch {
         errorMessage = responseText || errorMessage;
       }
       return NextResponse.json(

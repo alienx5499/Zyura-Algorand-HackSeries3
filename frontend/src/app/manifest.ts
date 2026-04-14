@@ -1,9 +1,6 @@
 import { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL || "https://zyura-algorand.vercel.app";
-
   return {
     name: "ZYURA - Instant Flight Delay Insurance",
     short_name: "ZYURA",

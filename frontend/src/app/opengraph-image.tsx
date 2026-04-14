@@ -35,7 +35,7 @@ export default async function Image() {
           interFont = buffer;
         }
       }
-    } catch (e) {
+    } catch {
       // Font fetch failed - will throw error below
     }
 
@@ -56,7 +56,7 @@ export default async function Image() {
       if (logoSvgResponse.ok) {
         logoUrl = logoSvgUrl;
       }
-    } catch (e) {
+    } catch {
       // If SVG fails, try PNG as fallback
       try {
         const logoPngUrl = `${baseUrl}/logo.png`;
@@ -64,7 +64,7 @@ export default async function Image() {
         if (logoPngResponse.ok) {
           logoUrl = logoPngUrl;
         }
-      } catch (e2) {
+      } catch {
         // Logo fetch failed, will use text fallback
       }
     }
@@ -82,7 +82,6 @@ export default async function Image() {
       >
         {/* ZYURA Logo Only */}
         {logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img src={logoUrl} alt="ZYURA" width={400} height={400} />
         ) : (
           <div
@@ -125,7 +124,7 @@ export default async function Image() {
           errorFont = buffer;
         }
       }
-    } catch (fontError) {
+    } catch {
       // Font loading failed
     }
 

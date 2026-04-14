@@ -138,6 +138,7 @@ export const MissionRocketIcon = ({ className }: { className?: string }) => {
 
       {/* Bow and Arrow icon - Using SVG without white background, inverted colors (white bow/arrow) */}
       {/* Match Speed's structure - same size as container */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- styled local SVG with filter */}
       <img
         src="/bow-and-arrow.svg"
         alt="Bow and Arrow"
@@ -219,6 +220,7 @@ export const InnovationBulbIcon = ({ className }: { className?: string }) => {
       </svg>
 
       {/* Brain icon - Using SVG without white background, inverted colors (white brain) */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- styled local SVG with filter */}
       <img
         src="/brain.svg"
         alt="Brain"
@@ -300,6 +302,7 @@ export const TransparencyEyeIcon = ({ className }: { className?: string }) => {
       </svg>
 
       {/* Eye icon - Using SVG without white background, inverted colors (white eye) */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- styled local SVG with filter */}
       <img
         src="/eye.svg"
         alt="Eye"

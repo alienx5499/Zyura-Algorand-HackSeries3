@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { Menu, X, User, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
-import Image from "next/image";
 import { LiquidButton } from "./liquid-glass-button";
 import { Logo } from "./logo";
 import { useAlgorandWallet } from "@/contexts/WalletConnectionProvider";

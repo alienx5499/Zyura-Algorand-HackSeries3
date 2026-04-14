@@ -1,11 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { ZyuraFooter } from "@/components/ui/zyura-footer";
 import { GooeyText } from "@/components/ui/gooey-text-morphing";
-import { Shield, Zap, Lock, Globe, Plane, Gauge } from "lucide-react";
+import { Globe, Plane } from "lucide-react";
 import { EvervaultCard, Icon } from "@/components/ui/evervault-card";
 import {
   MissionRocketIcon,
@@ -18,71 +16,11 @@ import {
 import ContactUs1 from "./mvpblocks/contact-us-1";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
 import { ScannerCardStream } from "@/components/ui/scanner-card-stream";
-import { fetchPolicyImages, PolicyImage } from "@/lib/fetch-policies";
+import { fetchPolicyImages } from "@/lib/fetch-policies";
 import TetrisLoading from "@/components/ui/tetris-loader";
-
-// Dynamic imports to avoid SSR issues
-const TestimonialsColumn = dynamic(
-  () =>
-    import("@/components/blocks/testimonials-columns-1").then((mod) => ({
-      default: mod.TestimonialsColumn,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="h-96 bg-gray-900 rounded-lg animate-pulse"></div>
-    ),
-  },
-);
-
-const testimonials = [
-  {
-    text: "ZYURA saved me when my flight was delayed 4 hours. I received my USDC payout automatically—no forms, no waiting. This is the future of travel insurance.",
-    image:
-      "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
-    name: "Sarah Chen",
-    role: "Frequent Traveler",
-  },
-  {
-    text: "As a business traveler, I need reliable protection without the hassle. ZYURA's instant payouts and transparent on-chain system give me peace of mind.",
-    image:
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face",
-    name: "Marcus Rodriguez",
-    role: "Business Traveler",
-  },
-  {
-    text: "The transparency is incredible. I can see exactly when my policy activates and when payouts trigger. No black box insurance company nonsense.",
-    image:
-      "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=100&h=100&fit=crop&crop=face",
-    name: "Emily Johnson",
-    role: "DeFi Enthusiast",
-  },
-  {
-    text: "Purchasing cover at checkout is so seamless. The integration with booking platforms makes it effortless to protect every trip without extra steps.",
-    image:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face",
-    name: "David Kim",
-    role: "Traveler",
-  },
-  {
-    text: "Algorand's speed means payouts hit my wallet in seconds. Traditional insurance takes weeks. ZYURA understands the value of instant compensation.",
-    image:
-      "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
-    name: "Lisa Wang",
-    role: "Crypto Native",
-  },
-  {
-    text: "Being a liquidity provider for the risk pool has been great. Surplus sharing means I earn while helping travelers get fair protection.",
-    image:
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face",
-    name: "Alex Thompson",
-    role: "Liquidity Provider",
-  },
-];
 
 const LandingPage = () => {
   const [policyImages, setPolicyImages] = useState<string[]>([]);
@@ -126,7 +64,7 @@ const LandingPage = () => {
         if (urlParams.get("refresh") === "true") {
           return true;
         }
-      } catch (error) {
+      } catch {
         // If we can't detect, assume normal load
       }
       return false;

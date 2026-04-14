@@ -1,13 +1,7 @@
 import { NextResponse } from "next/server";
-import algosdk from "algosdk";
 
 export async function GET() {
   try {
-    const algodUrl =
-      process.env.NEXT_PUBLIC_ALGOD_URL || "http://127.0.0.1:4001";
-    const algodToken =
-      process.env.NEXT_PUBLIC_ALGOD_TOKEN ||
-      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     const appId = process.env.NEXT_PUBLIC_ZYURA_APP_ID;
     const vaultAddr = process.env.RISK_POOL_VAULT_ADDR;
 
@@ -22,8 +16,7 @@ export async function GET() {
       );
     }
 
-    // Try to read from contract state
-    const algodClient = new algosdk.Algodv2(algodToken, algodUrl, "");
+    // Try to read from contract state (Algod client reserved for future on-chain read)
 
     // Call getRiskPoolVault method
     // Note: This requires a transaction, so for now we'll use env var

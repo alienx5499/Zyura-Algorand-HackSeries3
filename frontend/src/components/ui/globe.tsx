@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import createGlobe from "cobe";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +69,8 @@ const Earth: React.FC<EarthProps> = ({
     return () => {
       globe.destroy();
     };
+    // Recreate globe only when `dark` changes; other props are initial mount config.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dark]);
 
   return (

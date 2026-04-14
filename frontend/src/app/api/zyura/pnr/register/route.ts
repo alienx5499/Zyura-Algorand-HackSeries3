@@ -22,11 +22,6 @@ type RegisterBody = {
   notes?: string;
 };
 
-const FLIGHT_REPO =
-  process.env.GITHUB_FLIGHT_REPO ||
-  process.env.GITHUB_METADATA_REPO ||
-  "alienx5499/Zyura-Algorand-HackSeries3-MetaData";
-
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as RegisterBody;
@@ -42,7 +37,7 @@ export async function POST(req: NextRequest) {
       );
 
     // On Algorand we don't look up policy on-chain here; require core fields from the request
-    let { flightNumber, departureUnix, policyholder, date } = body;
+    let { flightNumber, departureUnix, date } = body;
 
     if (!flightNumber || !date) {
       return NextResponse.json(

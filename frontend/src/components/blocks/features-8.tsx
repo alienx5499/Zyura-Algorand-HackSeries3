@@ -278,6 +278,7 @@ export function Features() {
                         Likeur
                       </span>
                       <div className="ring-background size-7 ring-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- small remote avatar */}
                         <img
                           className="size-full rounded-full"
                           src="https://avatars.githubusercontent.com/u/102558960?v=4"
@@ -287,6 +288,7 @@ export function Features() {
                     </div>
                     <div className="relative ml-[calc(50%-1rem)] flex items-center gap-2">
                       <div className="ring-background size-8 ring-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- small remote avatar */}
                         <img
                           className="size-full rounded-full"
                           src="https://avatars.githubusercontent.com/u/47919550?v=4"
@@ -302,6 +304,7 @@ export function Features() {
                         B. Ng
                       </span>
                       <div className="ring-background size-7 ring-4">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- small remote avatar */}
                         <img
                           className="size-full rounded-full"
                           src="https://avatars.githubusercontent.com/u/31113941?v=4"

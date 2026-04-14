@@ -217,8 +217,6 @@ export async function POST(req: NextRequest) {
 
     // Fetch policy details from-chain if policyId provided
     let policyholder: string | undefined;
-    let coverageAmount: number | undefined;
-    let premiumPaid: number | undefined;
 
     if (body.policyId) {
       try {
@@ -231,8 +229,6 @@ export async function POST(req: NextRequest) {
         );
         const policy: any = await program.account.policy.fetch(policyPda);
         policyholder = new PublicKey(policy.policyholder).toBase58();
-        coverageAmount = Number(policy.coverageAmount?.toString() || "0");
-        premiumPaid = Number(policy.premiumPaid?.toString() || "0");
       } catch (err) {
         console.error("Failed to fetch policy from-chain:", err);
       }

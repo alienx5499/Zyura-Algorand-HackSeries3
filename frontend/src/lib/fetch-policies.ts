@@ -58,7 +58,7 @@ export async function fetchPolicyImages(
     }
 
     return getFallbackImages(limit);
-  } catch (error) {
+  } catch {
     // Silently return fallback images on any error
     return getFallbackImages(limit);
   }

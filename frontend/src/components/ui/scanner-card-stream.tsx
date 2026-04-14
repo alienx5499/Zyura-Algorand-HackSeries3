@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import * as THREE from "three";
 
 // --- Default Images (used if no cardImages prop is provided) ---
@@ -49,8 +43,6 @@ type ScannerCardStreamProps = {
 
 // --- The Main Component ---
 const ScannerCardStream = ({
-  showControls = false,
-  showSpeed = false,
   initialSpeed = 80,
   direction = -1,
   cardImages = defaultCardImages,
@@ -60,8 +52,7 @@ const ScannerCardStream = ({
   scanEffect = "scramble",
   className = "",
 }: ScannerCardStreamProps) => {
-  const [speed, setSpeed] = useState(initialSpeed);
-  const [isPaused, setIsPaused] = useState(false);
+  const [, setSpeed] = useState(initialSpeed);
   const [isScanning, setIsScanning] = useState(false); // New state for scanner visibility
 
   const cards = useMemo(() => {
@@ -99,20 +90,6 @@ const ScannerCardStream = ({
 
   const scannerState = useRef({ isScanning: false });
 
-  const toggleAnimation = useCallback(() => setIsPaused((prev) => !prev), []);
-  const resetPosition = useCallback(() => {
-    if (cardLineRef.current) {
-      cardStreamState.current.position =
-        cardLineRef.current.parentElement?.offsetWidth || 0;
-      cardStreamState.current.velocity = initialSpeed;
-      cardStreamState.current.direction = direction;
-      setIsPaused(false);
-    }
-  }, [initialSpeed, direction]);
-  const changeDirection = useCallback(() => {
-    cardStreamState.current.direction *= -1;
-  }, []);
-
   useEffect(() => {
     const cardLine = cardLineRef.current;
     const particleCanvas = particleCanvasRef.current;
@@ -124,7 +101,6 @@ const ScannerCardStream = ({
 
     // Update cardLineWidth to account for duplicated cards
     cardStreamState.current.cardLineWidth = (400 + cardGap) * cards.length;
-    let animationFrameId: number;
 
     // --- (SETUP LOGIC for Three.js, Canvas, etc. - no changes here) ---
     const scene = new THREE.Scene();
@@ -281,16 +257,16 @@ const ScannerCardStream = ({
       scannerState.current.isScanning = anyCardIsScanning;
     };
 
-    const handleMouseDown = (e: MouseEvent | TouchEvent) => {
+    const handleMouseDown = () => {
       /* ... */
     };
-    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+    const handleMouseMove = () => {
       /* ... */
     };
     const handleMouseUp = () => {
       /* ... */
     };
-    const handleWheel = (e: WheelEvent) => {
+    const handleWheel = () => {
       /* ... */
     };
     cardLine.addEventListener("mousedown", handleMouseDown);
@@ -305,7 +281,7 @@ const ScannerCardStream = ({
       // --- (ANIMATION LOOP LOGIC - no changes here) ---
       const deltaTime = (currentTime - cardStreamState.current.lastTime) / 1000;
       cardStreamState.current.lastTime = currentTime;
-      if (!isPaused && !cardStreamState.current.isDragging) {
+      if (!cardStreamState.current.isDragging) {
         if (
           cardStreamState.current.velocity > cardStreamState.current.minVelocity
         ) {
@@ -364,14 +340,14 @@ const ScannerCardStream = ({
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fill();
       });
-      animationFrameId = requestAnimationFrame(animate);
+      requestAnimationFrame(animate);
     };
-    animationFrameId = requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 
     return () => {
       /* ... (CLEANUP LOGIC - no changes here) ... */
     };
-  }, [isPaused, cards, cardGap, friction, scanEffect]);
+  }, [cards, cardGap, friction, scanEffect]);
 
   return (
     <main
@@ -433,6 +409,7 @@ const ScannerCardStream = ({
               className="card-wrapper relative w-[400px] h-[250px] shrink-0"
             >
               <div className="card-normal card absolute top-0 left-0 w-full h-full rounded-[15px] overflow-hidden bg-transparent shadow-[0_15px_40px_rgba(0,0,0,0.4)] z-[2] [clip-path:inset(0_0_0_var(--clip-right,0%))]">
+                {/* eslint-disable-next-line @next/next/no-img-element -- stream uses arbitrary URLs */}
                 <img
                   src={card.image}
                   alt="Card"

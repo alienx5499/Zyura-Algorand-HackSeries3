@@ -171,6 +171,7 @@ export function PolicyModal({ isOpen, onClose, data }: PolicyModalProps) {
                       Policy NFT
                     </h3>
                     <div className="bg-black rounded-lg p-2 border border-gray-700">
+                      {/* eslint-disable-next-line @next/next/no-img-element -- dynamic NFT / IPFS URLs */}
                       <img
                         src={data.imageUrl}
                         alt={`Policy #${data.policyId} NFT`}

@@ -6,7 +6,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import LandingPage from "@/components/LandingPage";
 import MintUSDC from "@/components/MintUSDC";
 import TestPage from "@/components/TestPage";

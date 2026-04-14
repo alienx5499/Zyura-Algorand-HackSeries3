@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           setAuthMethod(savedAuthMethod);
           console.log("User re-authenticated:", userData.email);
         }
-      } catch (error) {
+      } catch {
         console.log("No existing authentication found");
         localStorage.removeItem("isAuthenticated");
         localStorage.removeItem("authMethod");
