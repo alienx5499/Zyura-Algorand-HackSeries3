@@ -4,19 +4,19 @@
 
 ### Instant, fair, community‑owned flight‑delay insurance on Algorand
 
-[![Build Passing](https://img.shields.io/badge/build-passing-success?style=flat-square)](https://github.com/alienx5499/Zyura-Algorand/actions)
+[![Build Passing](https://img.shields.io/badge/build-passing-success?style=flat-square)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/actions)
 [![Algorand](https://img.shields.io/badge/Algorand-Testnet-purple?style=flat-square)](https://algorand.com/)
 [![TEALScript](https://img.shields.io/badge/TEALScript-Contract-blue?style=flat-square)](https://developer.algorand.org/)
-[![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat-square)](https://github.com/alienx5499/Zyura-Algorand/blob/main/CONTRIBUTING.md)
-[![License: MIT](https://custom-icon-badges.herokuapp.com/github/license/alienx5499/Zyura-Algorand?logo=law&logoColor=white)](https://github.com/alienx5499/Zyura-Algorand/blob/main/LICENSE)
+[![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat-square)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/blob/main/CONTRIBUTING.md)
+[![License: MIT](https://img.shields.io/github/license/alienx5499/Zyura-Algorand-HackSeries3?style=flat-square&logo=opensourceinitiative&logoColor=white&label=license)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/blob/main/LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Algorand-brightgreen?style=flat-square)](https://algorand.com/)
-[![Views](https://visitor-badge.laobi.icu/badge?page_id=alienx5499.Zyura-Algorand)](https://visitor-badge.laobi.icu/badge?page_id=alienx5499.Zyura-Algorand)
-[![⭐ GitHub stars](https://img.shields.io/github/stars/alienx5499/Zyura-Algorand?style=social)](https://github.com/alienx5499/Zyura-Algorand/stargazers)
-[![🍴 GitHub forks](https://img.shields.io/github/forks/alienx5499/Zyura-Algorand?style=social)](https://github.com/alienx5499/Zyura-Algorand/network)
-[![Commits](https://badgen.net/github/commits/alienx5499/Zyura-Algorand)](https://github.com/alienx5499/Zyura-Algorand/commits/main)
-[![🐛 GitHub issues](https://img.shields.io/github/issues/alienx5499/Zyura-Algorand)](https://github.com/alienx5499/Zyura-Algorand/issues)
-[![📂 GitHub pull requests](https://img.shields.io/github/issues-pr/alienx5499/Zyura-Algorand)](https://github.com/alienx5499/Zyura-Algorand/pulls)
-[![💾 GitHub code size](https://img.shields.io/github/languages/code-size/alienx5499/Zyura-Algorand)](https://github.com/alienx5499/Zyura-Algorand)
+[![Views](https://visitor-badge.laobi.icu/badge?page_id=alienx5499.Zyura-Algorand-HackSeries3)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3)
+[![GitHub stars](https://img.shields.io/github/stars/alienx5499/Zyura-Algorand-HackSeries3?style=social&logo=github)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/alienx5499/Zyura-Algorand-HackSeries3?style=social&logo=github)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/network)
+[![Commits](https://img.shields.io/github/commit-activity/m/alienx5499/Zyura-Algorand-HackSeries3?style=flat-square&label=commits%2Fmo)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/commits/main)
+[![GitHub issues](https://img.shields.io/github/issues/alienx5499/Zyura-Algorand-HackSeries3?style=flat-square&logo=github)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/alienx5499/Zyura-Algorand-HackSeries3?style=flat-square&logo=github)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/pulls)
+[![GitHub code size](https://img.shields.io/github/languages/code-size/alienx5499/Zyura-Algorand-HackSeries3?style=flat-square&logo=github)](https://github.com/alienx5499/Zyura-Algorand-HackSeries3)
 
 <img alt="ZYURA" src="https://zyura-algorand.vercel.app/logo.svg" width="120" height="120" style="filter: invert(1);" />
 
@@ -49,11 +49,11 @@ Flight delay data (via configurable data layer; demo uses GitHub-backed store) d
 
 Need instant flight‑delay protection? You’re exactly who we built this for.
 
-<a href="https://github.com/alienx5499/Zyura-Algorand">
+<a href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3">
   <img src="https://img.shields.io/badge/⭐%20Star%20this%20repo-Be%20part%20of%20our%20community!-yellow?style=for-the-badge&logo=github" alt="Star this repo" />
 </a>
 
-<a href="https://twitter.com/intent/tweet?text=🔥%20ZYURA%20on%20Algorand—instant%20flight%20delay%20insurance!%20Instant%20payouts,%20transparent%20on-chain.%20https://github.com/alienx5499/Zyura-Algorand%20@alienx5499">
+<a href="https://twitter.com/intent/tweet?text=🔥%20ZYURA%20on%20Algorand—instant%20flight%20delay%20insurance!%20Instant%20payouts,%20transparent%20on-chain.%20https://github.com/alienx5499/Zyura-Algorand-HackSeries3%20@alienx5499">
 <img src="https://img.shields.io/badge/Share-Help%20a%20fellow%20traveler!-1DA1F2?style=for-the-badge&logo=twitter" alt="Tweet about ZYURA" />
 </a>
 
@@ -425,8 +425,8 @@ ZYURA/
 
 ```bash
 # Clone the repository
-git clone https://github.com/alienx5499/ZYURA.git
-cd ZYURA
+git clone https://github.com/alienx5499/Zyura-Algorand-HackSeries3.git
+cd Zyura-Algorand-HackSeries3
 
 # Install contract dependencies
 cd contracts
@@ -1094,7 +1094,7 @@ We ❤️ open source! Your contributions make this project better.
 
 1. **Fork the Repository**
    ```bash
-   git clone https://github.com/your-username/Zyura-Algorand.git
+   git clone https://github.com/your-username/Zyura-Algorand-HackSeries3.git
    ```
 
 2. **Create Feature Branch**
@@ -1129,8 +1129,8 @@ We ❤️ open source! Your contributions make this project better.
 <div align="center">
 	<h3>Thank you for contributing to our repository</h3><br>
 	<p align="center">
-		<a href="https://github.com/alienx5499/Zyura-Algorand/contributors">
-			<img src="https://contrib.rocks/image?repo=alienx5499/Zyura-Algorand" width="720" height="380" />
+		<a href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3/contributors">
+			<img src="https://contrib.rocks/image?repo=alienx5499/Zyura-Algorand-HackSeries3" width="720" height="380" />
 		</a>
 	</p>
 </div>
@@ -1149,7 +1149,7 @@ Unless otherwise noted in a file header, all source code in this repository is p
 
 ### 📬 **Feedback & Suggestions**
 
-_We value your input! Share your thoughts through [GitHub Issues](https://github.com/alienx5499/Zyura-Algorand/issues)._
+_We value your input! Share your thoughts through [GitHub Issues](https://github.com/alienx5499/Zyura-Algorand-HackSeries3/issues)._
 
 💡 _Let's work together to build a more transparent and accessible insurance future on Algorand!_
 
