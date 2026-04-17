@@ -1,5 +1,11 @@
 export type PnrStatus = "fetching" | "found" | "not-found" | null;
 
+/** Origin / destination from PNR search (IATA codes). */
+export type PnrFlightRoute = {
+  origin: string;
+  destination: string;
+};
+
 export type LastPurchaseTx = {
   txId: string;
   groupId?: string;

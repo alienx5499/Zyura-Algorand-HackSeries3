@@ -1,4 +1,8 @@
-import type { LastPurchaseTx, PnrStatus } from "@/lib/dashboard/types";
+import type {
+  LastPurchaseTx,
+  PnrFlightRoute,
+  PnrStatus,
+} from "@/lib/dashboard/types";
 
 export type { PnrStatus };
 
@@ -19,6 +23,7 @@ export type PurchaseCallbacks = {
   setProductId: (value: string) => void;
   setFetchedPassenger: (value: any | null) => void;
   setPnrStatus: (value: PnrStatus) => void;
+  setPnrRoute: (value: PnrFlightRoute | null) => void;
   setShowBuyForm: (value: boolean) => void;
   fetchMyPolicies: (bypassCache?: boolean) => void | Promise<void>;
   setLastPurchaseTx: (value: LastPurchaseTx) => void;

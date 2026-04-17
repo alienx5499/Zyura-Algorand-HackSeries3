@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import type { PnrStatus } from "@/lib/dashboard/types";
+import type { PnrFlightRoute, PnrStatus } from "@/lib/dashboard/types";
 
 type UsePnrLookupArgs = {
   pnr: string;
@@ -9,6 +9,7 @@ type UsePnrLookupArgs = {
   setDepartureTime: (value: string) => void;
   setFetchedPassenger: (value: any | null) => void;
   setPnrStatus: (value: PnrStatus) => void;
+  setPnrRoute: (value: PnrFlightRoute | null) => void;
 };
 
 const DEBOUNCE_MS = 220;
@@ -24,6 +25,7 @@ export function usePnrLookup({
   setDepartureTime,
   setFetchedPassenger,
   setPnrStatus,
+  setPnrRoute,
 }: UsePnrLookupArgs) {
   const pnrRef = useRef(pnr);
 
@@ -36,6 +38,7 @@ export function usePnrLookup({
     if (!normalized || normalized.length !== 6) {
       setFetchedPassenger(null);
       setPnrStatus(null);
+      setPnrRoute(null);
       return;
     }
 
@@ -47,6 +50,7 @@ export function usePnrLookup({
       if (cached && Date.now() - cached.at < CLIENT_CACHE_TTL_MS) {
         if (!cached.ok) {
           setPnrStatus("not-found");
+          setPnrRoute(null);
           return;
         }
         const data = cached.data;
@@ -59,11 +63,18 @@ export function usePnrLookup({
           setDepartureTime(`${hours}:${minutes}`);
         }
         if (data.passenger) setFetchedPassenger(data.passenger);
+        if (data.origin && data.destination) {
+          setPnrRoute({
+            origin: String(data.origin),
+            destination: String(data.destination),
+          });
+        } else setPnrRoute(null);
         setPnrStatus("found");
         return;
       }
 
       setPnrStatus("fetching");
+      setPnrRoute(null);
       try {
         const response = await fetch(
           `/api/zyura/pnr/search?pnr=${encodeURIComponent(normalized)}`,
@@ -89,6 +100,12 @@ export function usePnrLookup({
           if (data.passenger) {
             setFetchedPassenger(data.passenger);
           }
+          if (data.origin && data.destination) {
+            setPnrRoute({
+              origin: String(data.origin),
+              destination: String(data.destination),
+            });
+          } else setPnrRoute(null);
           setPnrStatus("found");
           toast.success("PNR found! Details auto-filled.", {
             id: "pnr-lookup-success",
@@ -100,6 +117,7 @@ export function usePnrLookup({
             data: null,
           });
           setPnrStatus("not-found");
+          setPnrRoute(null);
         }
       } catch (error: unknown) {
         if (error instanceof DOMException && error.name === "AbortError")
@@ -107,6 +125,7 @@ export function usePnrLookup({
         console.error("Error fetching PNR:", error);
         if (pnrRef.current.trim().toUpperCase() !== normalized) return;
         setPnrStatus("not-found");
+        setPnrRoute(null);
       }
     }, DEBOUNCE_MS);
 
@@ -120,6 +139,7 @@ export function usePnrLookup({
     setDepartureTime,
     setFetchedPassenger,
     setFlightNumber,
+    setPnrRoute,
     setPnrStatus,
   ]);
 }

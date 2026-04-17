@@ -5,7 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import Earth from "@/components/ui/globe";
+import { ContactMarketingGlobe } from "@/components/mvpblocks/contact-marketing-globe";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { Label } from "@/components/ui/label";
 import { Check, Loader2 } from "lucide-react";
@@ -230,12 +230,7 @@ export default function ContactUs1() {
                     <br />
                     ZYURA.
                     <div className="absolute -right-20 -bottom-20 z-10 mx-auto flex h-full w-full max-w-[300px] items-center justify-center transition-all duration-700 hover:scale-105 md:-right-28 md:-bottom-28 md:max-w-[550px]">
-                      <Earth
-                        scale={1.1}
-                        baseColor={[0.5, 0.3, 1]}
-                        markerColor={[0, 0, 0]}
-                        glowColor={[0.5, 0.3, 1]}
-                      />
+                      <ContactMarketingGlobe />
                     </div>
                   </article>
                 </div>

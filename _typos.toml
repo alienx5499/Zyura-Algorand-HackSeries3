@@ -1,3 +1,6 @@
+[files]
+extend-exclude = ["frontend/src/lib/dashboard/airport-coordinates.ts"]
+
 [default.extend-words]
 # Domain terms and abbreviations used throughout the codebase.
 PN = "PN"

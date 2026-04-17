@@ -30,6 +30,7 @@ type UsePolicyPurchaseArgs = {
   setProductId: PurchaseCallbacks["setProductId"];
   setFetchedPassenger: PurchaseCallbacks["setFetchedPassenger"];
   setPnrStatus: PurchaseCallbacks["setPnrStatus"];
+  setPnrRoute: PurchaseCallbacks["setPnrRoute"];
   setShowBuyForm: PurchaseCallbacks["setShowBuyForm"];
   fetchMyPolicies: PurchaseCallbacks["fetchMyPolicies"];
   setLastPurchaseTx: (value: LastPurchaseTx) => void;
@@ -52,6 +53,7 @@ export function usePolicyPurchase({
   setProductId,
   setFetchedPassenger,
   setPnrStatus,
+  setPnrRoute,
   setShowBuyForm,
   fetchMyPolicies,
   setLastPurchaseTx,
@@ -188,6 +190,7 @@ export function usePolicyPurchase({
       setProductId("");
       setFetchedPassenger(null);
       setPnrStatus(null);
+      setPnrRoute(null);
       setShowBuyForm(false);
       setTimeout(() => {
         fetchMyPolicies(true);

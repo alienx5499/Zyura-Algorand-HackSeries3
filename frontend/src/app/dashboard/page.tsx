@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // Import new components
 import { BuyInsuranceSection } from "@/components/dashboard/BuyInsuranceSection";
+import { FlightRouteSection } from "@/components/dashboard/FlightRouteSection";
 import { HowItWorksCard } from "@/components/dashboard/HowItWorksCard";
 import { MyPoliciesSection } from "@/components/dashboard/MyPoliciesSection";
 import { ProductDetailsPanel } from "@/components/dashboard/ProductDetailsPanel";
@@ -23,7 +24,7 @@ import { usePolicyPurchase } from "@/lib/dashboard/use-policy-purchase";
 import { useDashboardSectionNavigation } from "@/lib/dashboard/use-dashboard-section-navigation";
 import { usePnrLookup } from "@/lib/dashboard/use-pnr-lookup";
 import { useUsdcOptIn } from "@/lib/dashboard/use-usdc-opt-in";
-import type { PnrStatus } from "@/lib/dashboard/types";
+import type { PnrFlightRoute, PnrStatus } from "@/lib/dashboard/types";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -102,6 +103,7 @@ export default function DashboardPage() {
   });
   const [fetchedPassenger, setFetchedPassenger] = useState<any | null>(null);
   const [pnrStatus, setPnrStatus] = useState<PnrStatus>(null);
+  const [pnrRoute, setPnrRoute] = useState<PnrFlightRoute | null>(null);
   const { activeSection } = useDashboardSectionNavigation();
   const {
     isOptingInUsdc,
@@ -132,6 +134,7 @@ export default function DashboardPage() {
     setProductId,
     setFetchedPassenger,
     setPnrStatus,
+    setPnrRoute,
     setShowBuyForm,
     fetchMyPolicies,
     setLastPurchaseTx,
@@ -171,6 +174,7 @@ export default function DashboardPage() {
     setDepartureTime,
     setFetchedPassenger,
     setPnrStatus,
+    setPnrRoute,
   });
 
   // Don't show dashboard content to unconnected users
@@ -327,6 +331,12 @@ export default function DashboardPage() {
               {/* Product Details Card */}
               <ProductDetailsPanel selectedProductInfo={selectedProductInfo} />
 
+              <FlightRouteSection
+                pnr={pnr}
+                pnrStatus={pnrStatus}
+                pnrRoute={pnrRoute}
+              />
+
               {/* Info Card */}
               <HowItWorksCard />
             </div>
@@ -357,6 +367,7 @@ export default function DashboardPage() {
             setDepartureTime("");
             setFetchedPassenger(null);
             setPnrStatus(null);
+            setPnrRoute(null);
           },
         }}
       />

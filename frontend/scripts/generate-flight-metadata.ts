@@ -12,7 +12,14 @@
  *   COMMIT_MESSAGE="..."       — override default "update: N flights generated (... PNRs)"
  *   FLIGHT_NUMBER=GV697        — optional fixed flight number for the first flight only
  *   FUTURE_DAYS_MIN / FUTURE_DAYS_MAX — departure window (default 1–365 days ahead); time-of-day is random
- *   SCHEDULED_DEPARTURE_UNIX=  FLIGHT_DATE=  NEW_FLIGHT_ORIGIN=  NEW_FLIGHT_DESTINATION=
+ *   SCHEDULED_DEPARTURE_UNIX=  FLIGHT_DATE=
+ *
+ * Constrain airports (IATA must appear in AIRPORT_CODES in this script):
+ *   FROM=DEL              — all flights depart DEL, random destination (≠ DEL)
+ *   TO=PEK                — all flights arrive PEK, random origin (≠ PEK)
+ *   FROM=DEL TO=JFK       — fixed route DEL → JFK for every generated flight
+ *   Aliases (same meaning; first wins): FROM | FLIGHT_ORIGIN | NEW_FLIGHT_ORIGIN, and
+ *   TO | FLIGHT_DESTINATION | NEW_FLIGHT_DESTINATION
  */
 
 import crypto from "crypto";
@@ -53,26 +60,40 @@ const FUTURE_DAYS_MAX = Math.max(
 const FLIGHT_LETTER_SET = "ABCDEFGHJKLMNPQRSTUVWXYZ";
 
 const AIRPORT_CODES = [
-  "JFK",
-  "LAX",
-  "SFO",
-  "SEA",
-  "ORD",
   "ATL",
-  "DFW",
-  "DEN",
+  "BLR",
+  "BOM",
   "BOS",
-  "MIA",
-  "PHX",
-  "LAS",
-  "IAD",
-  "CLT",
-  "DTW",
-  "MSP",
-  "FLL",
-  "SLC",
-  "SAN",
   "BWI",
+  "CAN",
+  "CLT",
+  "DEL",
+  "DEN",
+  "DFW",
+  "DTW",
+  "DXB",
+  "FLL",
+  "FRA",
+  "HND",
+  "IAD",
+  "ICN",
+  "JFK",
+  "LAS",
+  "LAX",
+  "LED",
+  "LHR",
+  "MIA",
+  "MSP",
+  "ORD",
+  "PEK",
+  "PHX",
+  "PVG",
+  "SAN",
+  "SEA",
+  "SFO",
+  "SIN",
+  "SLC",
+  "SVO",
 ];
 
 const FIRST_NAMES = [
@@ -362,7 +383,62 @@ function randomAirport(exclude?: string): string {
   const pool = exclude
     ? AIRPORT_CODES.filter((c) => c !== exclude)
     : AIRPORT_CODES;
+  if (pool.length === 0) {
+    throw new Error(
+      `No airport left in pool after excluding ${exclude ?? "(none)"}; widen AIRPORT_CODES or relax FROM/TO.`,
+    );
+  }
   return pool[crypto.randomInt(0, pool.length)];
+}
+
+function normalizeIata(raw: string | undefined): string | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  const t = String(raw).trim();
+  if (!t) return undefined;
+  return t.toUpperCase();
+}
+
+/**
+ * One leg per call: respects FROM / TO (and aliases). Both set → fixed route.
+ * Only FROM → random destination ≠ origin. Only TO → random origin ≠ destination.
+ */
+function pickOriginDestination(): { origin: string; destination: string } {
+  const from =
+    normalizeIata(process.env.FROM) ||
+    normalizeIata(process.env.FLIGHT_ORIGIN) ||
+    normalizeIata(process.env.NEW_FLIGHT_ORIGIN);
+  const to =
+    normalizeIata(process.env.TO) ||
+    normalizeIata(process.env.FLIGHT_DESTINATION) ||
+    normalizeIata(process.env.NEW_FLIGHT_DESTINATION);
+
+  if (from && !AIRPORT_CODES.includes(from)) {
+    throw new Error(
+      `Unknown FROM / origin IATA "${from}" — add it to AIRPORT_CODES in this script.`,
+    );
+  }
+  if (to && !AIRPORT_CODES.includes(to)) {
+    throw new Error(
+      `Unknown TO / destination IATA "${to}" — add it to AIRPORT_CODES in this script.`,
+    );
+  }
+
+  if (from && to) {
+    if (from === to) {
+      throw new Error(`FROM and TO must differ (both were ${from})`);
+    }
+    return { origin: from, destination: to };
+  }
+  if (from) {
+    return { origin: from, destination: randomAirport(from) };
+  }
+  if (to) {
+    return { origin: randomAirport(to), destination: to };
+  }
+  const origin = randomAirport();
+  let destination = randomAirport(origin);
+  if (destination === origin) destination = randomAirport(origin);
+  return { origin, destination };
 }
 
 function randomFutureUnix(): number {
@@ -477,6 +553,22 @@ async function main(): Promise<void> {
   const created: string[] = [];
   let totalPnrs = 0;
 
+  const routeHint = [
+    process.env.FROM && `FROM=${normalizeIata(process.env.FROM)}`,
+    process.env.TO && `TO=${normalizeIata(process.env.TO)}`,
+    process.env.FLIGHT_ORIGIN &&
+      `FLIGHT_ORIGIN=${normalizeIata(process.env.FLIGHT_ORIGIN)}`,
+    process.env.FLIGHT_DESTINATION &&
+      `FLIGHT_DESTINATION=${normalizeIata(process.env.FLIGHT_DESTINATION)}`,
+    process.env.NEW_FLIGHT_ORIGIN &&
+      `NEW_FLIGHT_ORIGIN=${normalizeIata(process.env.NEW_FLIGHT_ORIGIN)}`,
+    process.env.NEW_FLIGHT_DESTINATION &&
+      `NEW_FLIGHT_DESTINATION=${normalizeIata(process.env.NEW_FLIGHT_DESTINATION)}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (routeHint) console.log(`Airport filter: ${routeHint}`);
+
   for (let n = 0; n < NEW_FLIGHT_COUNT; n++) {
     let flightNumber: string;
     if (n === 0 && FIXED_FLIGHT_NUMBER) {
@@ -491,10 +583,7 @@ async function main(): Promise<void> {
     }
     usedFlightNumbers.add(flightNumber);
 
-    const origin = process.env.NEW_FLIGHT_ORIGIN || randomAirport();
-    let destination =
-      process.env.NEW_FLIGHT_DESTINATION || randomAirport(origin);
-    if (destination === origin) destination = randomAirport(origin);
+    const { origin, destination } = pickOriginDestination();
 
     const scheduledUnix =
       process.env.SCHEDULED_DEPARTURE_UNIX != null &&
@@ -511,16 +600,17 @@ async function main(): Promise<void> {
 
     const recordTimestamp = Math.floor(Date.now() / 1000) + n;
 
-    const record = buildFlightRecord(
-      flightNumber,
-      codes,
-      origin,
-      destination,
-      scheduledUnix,
-      flightDate,
-      recordTimestamp,
+    records.push(
+      buildFlightRecord(
+        flightNumber,
+        codes,
+        origin,
+        destination,
+        scheduledUnix,
+        flightDate,
+        recordTimestamp,
+      ),
     );
-    records.push(record);
     created.push(flightNumber);
     console.log(
       `Flight ${flightNumber}: ${codes.length} PNRs (${origin} → ${destination}, ${flightDate})`,
