@@ -20,7 +20,7 @@ import { CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { ScannerCardStream } from "@/components/ui/scanner-card-stream";
 import { fetchPolicyImages } from "@/lib/fetch-policies";
-import TetrisLoading from "@/components/ui/tetris-loader";
+import { PolicyFetchLottie } from "@/components/dashboard/policy-fetch-lottie";
 
 const LandingPage = () => {
   const [policyImages, setPolicyImages] = useState<string[]>([]);
@@ -432,13 +432,8 @@ const LandingPage = () => {
           </div>
           <div className="relative h-[400px] w-full rounded-2xl overflow-hidden border border-gray-800 bg-black flex items-center justify-center">
             {isLoadingPolicies ? (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                <TetrisLoading
-                  size="md"
-                  speed="normal"
-                  showLoadingText={true}
-                  loadingText="Loading policies..."
-                />
+              <div className="flex h-full w-full items-center justify-center px-4">
+                <PolicyFetchLottie lottieClassName="h-24 w-24 md:h-28 md:w-28" />
               </div>
             ) : (
               <ScannerCardStream

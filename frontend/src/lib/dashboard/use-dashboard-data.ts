@@ -13,7 +13,8 @@ export function useDashboardData({
   setProductId,
 }: UseDashboardDataArgs) {
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
+  /** Start true so we never flash "No policies" before the first fetch runs (e.g. wallet init delay). */
+  const [isLoadingPolicies, setIsLoadingPolicies] = useState(true);
   const [products, setProducts] = useState<Array<{ id: string }>>([]);
   const [selectedProductInfo, setSelectedProductInfo] = useState<any | null>(
     null,
@@ -123,6 +124,7 @@ export function useDashboardData({
   const resetPoliciesState = useCallback(() => {
     setMyPolicies([]);
     setPoliciesFetchError(null);
+    setIsLoadingPolicies(false);
   }, []);
 
   return {

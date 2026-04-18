@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Navbar1 } from "@/components/ui/navbar-1";
 import { useAlgorandWallet } from "@/contexts/WalletConnectionProvider";
@@ -28,6 +28,7 @@ import type { PnrFlightRoute, PnrStatus } from "@/lib/dashboard/types";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const lastPoliciesFetchKeyRef = useRef<string | null>(null);
   const { address, isConnected, peraWallet } = useAlgorandWallet();
 
   const connected = isConnected;
@@ -154,9 +155,16 @@ export default function DashboardPage() {
     const hasAddress =
       address && typeof address === "string" && address.trim().length > 0;
     if (isConnected && hasAddress) {
+      const wallet = address.trim();
+      const fetchKey = `${wallet}:${isConnected ? "1" : "0"}`;
+      if (lastPoliciesFetchKeyRef.current === fetchKey) {
+        return;
+      }
+      lastPoliciesFetchKeyRef.current = fetchKey;
       fetchMyPolicies();
       fetchUsdcOptInStatus();
     } else {
+      lastPoliciesFetchKeyRef.current = null;
       resetPoliciesState();
       setIsUsdcOptedIn(null);
     }

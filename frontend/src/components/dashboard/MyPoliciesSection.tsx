@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { PolicyCard } from "@/components/dashboard/PolicyCard";
-import { SkeletonCard } from "@/components/dashboard/SkeletonCard";
+import { PolicyFetchLottie } from "@/components/dashboard/policy-fetch-lottie";
 import {
   getDisplayFlightAndPnr,
   microToUsd,
@@ -116,31 +116,33 @@ export function MyPoliciesSection({
             />
           ) : isLoadingPolicies ? (
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              className="flex justify-center py-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              {[0, 1, 2, 3].map((i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                >
-                  <SkeletonCard />
-                </motion.div>
-              ))}
+              <PolicyFetchLottie />
             </motion.div>
           ) : myPolicies.length === 0 ? (
-            <EmptyState
-              icon={FileText}
-              title="No Policies Yet"
-              description="Purchase your first flight delay insurance policy to get started"
-              action={{
-                label: "Buy Policy",
-                onClick: () => setShowBuyForm(true),
-              }}
-            />
+            <div className="flex flex-col items-center justify-center py-2 text-center">
+              <PolicyFetchLottie
+                lottieClassName="h-24 w-24"
+                loop={false}
+                autoplay={false}
+              />
+              <h3 className="mt-3 text-lg font-semibold text-white">
+                No Policies Yet
+              </h3>
+              <p className="mt-1 max-w-md text-sm text-gray-500">
+                Purchase your first flight delay insurance policy to get started
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowBuyForm(true)}
+                className="mt-4 inline-flex cursor-pointer items-center justify-center rounded-lg border border-indigo-500/45 bg-indigo-500/15 px-3 py-2.5 text-sm font-medium text-indigo-100 transition-colors duration-200 hover:border-indigo-400/55 hover:bg-indigo-500/25"
+              >
+                Buy Policy
+              </button>
+            </div>
           ) : (
             <motion.div
               className="grid grid-cols-1 md:grid-cols-2 gap-4"

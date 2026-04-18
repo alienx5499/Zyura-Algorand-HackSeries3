@@ -12,6 +12,7 @@ import {
 import { FaucetLastTransferBanner } from "@/components/dashboard/faucet/faucet-last-transfer-banner";
 import { FaucetPageHeader } from "@/components/dashboard/faucet/faucet-page-header";
 import { FaucetRequestCard } from "@/components/dashboard/faucet/faucet-request-card";
+import { FaucetRecycleCard } from "@/components/dashboard/faucet/faucet-recycle-card";
 import { FaucetUsdcAssetCard } from "@/components/dashboard/faucet/faucet-usdc-asset-card";
 import { FaucetWalletSnapshotCard } from "@/components/dashboard/faucet/faucet-wallet-snapshot-card";
 import { readJsonResponse } from "@/components/dashboard/faucet/read-json-response";
@@ -28,7 +29,7 @@ export default function FaucetPage() {
   const router = useRouter();
   const { address, isConnected, peraWallet } = useAlgorandWallet();
   const connected = isConnected;
-  const { usdcBalance, fetchUsdcOptInStatus } = useUsdcOptIn({
+  const { usdcBalance, fetchUsdcOptInStatus, isUsdcOptedIn } = useUsdcOptIn({
     connected,
     address,
     peraWallet,
@@ -201,6 +202,23 @@ export default function FaucetPage() {
                 isRequesting={isRequesting}
                 allowedPresets={allowedPresets}
                 onRequest={handleRequest}
+              />
+              <FaucetRecycleCard
+                explorerBaseUrl={peraExplorerBase}
+                address={address}
+                peraWallet={peraWallet}
+                availableUsdc={displayBalance}
+                isUsdcOptedIn={isUsdcOptedIn}
+                onRecycleSuccess={async () => {
+                  setBalanceOptimistic(null);
+                  await fetchUsdcOptInStatus();
+                  await (async () => {
+                    for (let i = 0; i < 8; i += 1) {
+                      await new Promise<void>((r) => setTimeout(r, 700));
+                      await fetchUsdcOptInStatus();
+                    }
+                  })();
+                }}
               />
             </div>
 
