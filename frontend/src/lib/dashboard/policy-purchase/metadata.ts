@@ -222,7 +222,7 @@ export async function finalizePurchasedMetadata(args: {
       `Authoritative status and payout flags live on-chain (Zyura app ${zyuraAppIdStr}, policy id ${policyId}); this file mirrors that for display.`,
     ].join(" "),
   };
-  await fetch("/api/github/upload", {
+  const finalizeRes = await fetch("/api/github/upload", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -230,7 +230,16 @@ export async function finalizePurchasedMetadata(args: {
       filePath: metadataFilename,
       message: `Update metadata with NFT Asset ID ${nftAssetId} for Policy ${policyId}`,
     }),
-  }).then((r) => {
-    if (!r.ok) console.warn("Failed to update metadata with NFT asset ID");
   });
+  const finalizePayload = await readApiJsonBody<{
+    error?: string;
+    details?: string;
+  }>(finalizeRes);
+  if (!finalizeRes.ok) {
+    throw new Error(
+      finalizePayload.error ||
+        finalizePayload.details ||
+        `Failed to update metadata after purchase (${finalizeRes.status})`,
+    );
+  }
 }
