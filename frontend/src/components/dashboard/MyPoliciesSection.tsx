@@ -184,6 +184,13 @@ export function MyPoliciesSection({
                   const { flight: cardFlight, pnr: cardPnr } =
                     getDisplayFlightAndPnr(p);
 
+                  const chainSyncHint =
+                    p.onChainPurchaseInProgress === true
+                      ? "Confirmed on-chain; NFT link may still finish — this card will update."
+                      : p.githubMetadataStale === true
+                        ? "Confirmed on-chain; metadata may still update."
+                        : null;
+
                   return (
                     <motion.div
                       key={`${policyId}-${index}`}
@@ -208,6 +215,7 @@ export function MyPoliciesSection({
                         coverageUsd={coverageUsd}
                         explorerUrl={explorerUrl}
                         payoutTxId={p.payoutTxId}
+                        chainSyncHint={chainSyncHint}
                         onOpen={() => openPolicyModal(p)}
                       />
                     </motion.div>

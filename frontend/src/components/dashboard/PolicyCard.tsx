@@ -14,6 +14,7 @@ interface PolicyCardProps {
   coverageUsd: string;
   explorerUrl: string;
   payoutTxId?: string;
+  chainSyncHint?: string | null;
   onOpen: () => void;
 }
 
@@ -28,6 +29,7 @@ export function PolicyCard({
   coverageUsd,
   explorerUrl,
   payoutTxId,
+  chainSyncHint,
   onOpen,
 }: PolicyCardProps) {
   const statusConfig = {
@@ -78,6 +80,12 @@ export function PolicyCard({
         </div>
         <Plane className="w-5 h-5 text-gray-500 group-hover:text-indigo-400 transition-colors" />
       </div>
+
+      {chainSyncHint ? (
+        <p className="mb-3 rounded-md border border-amber-500/25 bg-amber-500/5 px-2.5 py-1.5 text-xs leading-snug text-amber-200/90">
+          {chainSyncHint}
+        </p>
+      ) : null}
 
       {/* Flight Info */}
       <div className="space-y-3 mb-4">
