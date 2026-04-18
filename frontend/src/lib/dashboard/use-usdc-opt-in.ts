@@ -3,6 +3,18 @@ import algosdk from "algosdk";
 import { toast } from "sonner";
 import { fetchAlgorandSuggestedParams } from "@/lib/dashboard/algorand-utils";
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function readJsonSafe<T>(res: Response): Promise<T | null> {
+  const text = await res.text();
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
+}
+
 type UseUsdcOptInArgs = {
   connected: boolean;
   address?: string | null;
@@ -16,31 +28,59 @@ export function useUsdcOptIn({
 }: UseUsdcOptInArgs) {
   const [isOptingInUsdc, setIsOptingInUsdc] = useState(false);
   const [isUsdcOptedIn, setIsUsdcOptedIn] = useState<boolean | null>(null);
+  const [usdcBalance, setUsdcBalance] = useState<number | null>(null);
 
-  const fetchUsdcOptInStatus = useCallback(async () => {
-    if (!address) {
-      setIsUsdcOptedIn(null);
-      return;
-    }
-    const usdcAsaId = Number(process.env.NEXT_PUBLIC_USDC_ASA_ID || "0");
-    if (!usdcAsaId) {
-      setIsUsdcOptedIn(null);
-      return;
-    }
-    try {
-      const acctRes = await fetch(
-        `/api/algorand/account/${encodeURIComponent(address)}`,
-      );
-      if (!acctRes.ok) {
+  const fetchUsdcOptInStatus = useCallback(
+    async (preserveTrue = false) => {
+      if (!address) {
         setIsUsdcOptedIn(null);
-        return;
+        setUsdcBalance(null);
+        return null;
       }
-      const acctData = (await acctRes.json()) as { assetIds?: number[] };
-      setIsUsdcOptedIn((acctData.assetIds ?? []).includes(usdcAsaId));
-    } catch {
-      setIsUsdcOptedIn(null);
-    }
-  }, [address]);
+      const usdcAsaId = Number(process.env.NEXT_PUBLIC_USDC_ASA_ID || "0");
+      if (!usdcAsaId) {
+        setIsUsdcOptedIn(null);
+        setUsdcBalance(null);
+        return null;
+      }
+      try {
+        const acctRes = await fetch(
+          `/api/algorand/account/${encodeURIComponent(address)}`,
+        );
+        if (!acctRes.ok) {
+          setIsUsdcOptedIn(null);
+          setUsdcBalance(null);
+          return null;
+        }
+        const acctData = ((await readJsonSafe<{
+          assetIds?: number[];
+          assetHoldings?: Array<{ assetId: number; amount: number }>;
+        }>(acctRes)) ?? {}) as {
+          assetIds?: number[];
+          assetHoldings?: Array<{ assetId: number; amount: number }>;
+        };
+        const optedIn = (acctData.assetIds ?? []).includes(usdcAsaId);
+        if (!optedIn && preserveTrue && isUsdcOptedIn === true) {
+          return true;
+        }
+        setIsUsdcOptedIn(optedIn);
+        if (optedIn) {
+          const usdcHolding = (acctData.assetHoldings ?? []).find(
+            (a) => a.assetId === usdcAsaId,
+          );
+          setUsdcBalance(Number(usdcHolding?.amount ?? 0) / 1_000_000);
+        } else {
+          setUsdcBalance(0);
+        }
+        return optedIn;
+      } catch {
+        setIsUsdcOptedIn(null);
+        setUsdcBalance(null);
+        return null;
+      }
+    },
+    [address, isUsdcOptedIn],
+  );
 
   const handleOptInUsdc = useCallback(async () => {
     const currentAddress = address;
@@ -78,14 +118,21 @@ export function useUsdcOptIn({
         body: JSON.stringify({ signedTx: signedBase64 }),
       });
       if (!sendRes.ok) {
-        const err = await sendRes.json();
-        throw new Error(err.error || "Failed to send opt-in transaction");
+        const err = await readJsonSafe<{ error?: string }>(sendRes);
+        throw new Error(err?.error || "Failed to send opt-in transaction");
       }
-      const { txId } = await sendRes.json();
+      const sendPayload =
+        (await readJsonSafe<{ txId?: string }>(sendRes)) ?? {};
+      const txId = sendPayload.txId ?? "unknown";
       toast.success("Opt-in successful! You can now purchase with USDC.", {
         description: `Tx: ${String(txId).slice(0, 12)}...`,
       });
       setIsUsdcOptedIn(true);
+      for (let i = 0; i < 6; i += 1) {
+        const confirmed = await fetchUsdcOptInStatus(true);
+        if (confirmed) break;
+        await sleep(1200);
+      }
     } catch (error: any) {
       console.error("Opt-in error:", error);
       toast.error("Opt-in failed", {
@@ -96,11 +143,17 @@ export function useUsdcOptIn({
     } finally {
       setIsOptingInUsdc(false);
     }
-  }, [address, connected, peraWallet]);
+  }, [address, connected, peraWallet, fetchUsdcOptInStatus]);
+
+  const canShowFaucet = Boolean(
+    isUsdcOptedIn && typeof usdcBalance === "number" && usdcBalance < 190,
+  );
 
   return {
     isOptingInUsdc,
     isUsdcOptedIn,
+    usdcBalance,
+    canShowFaucet,
     setIsUsdcOptedIn,
     fetchUsdcOptInStatus,
     handleOptInUsdc,

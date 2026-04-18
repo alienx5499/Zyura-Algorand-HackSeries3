@@ -108,6 +108,8 @@ export default function DashboardPage() {
   const {
     isOptingInUsdc,
     isUsdcOptedIn,
+    usdcBalance,
+    canShowFaucet,
     setIsUsdcOptedIn,
     fetchUsdcOptInStatus,
     handleOptInUsdc,
@@ -138,6 +140,7 @@ export default function DashboardPage() {
     setShowBuyForm,
     fetchMyPolicies,
     setLastPurchaseTx,
+    fetchUsdcOptInStatus,
   });
 
   // Fetch products on mount
@@ -305,6 +308,8 @@ export default function DashboardPage() {
                 myPolicies={myPolicies}
                 openPolicyModal={openPolicyModal}
                 isUsdcOptedIn={isUsdcOptedIn}
+                usdcBalance={usdcBalance}
+                canShowFaucet={canShowFaucet}
                 handleOptInUsdc={handleOptInUsdc}
                 isOptingInUsdc={isOptingInUsdc}
                 peraWallet={peraWallet}

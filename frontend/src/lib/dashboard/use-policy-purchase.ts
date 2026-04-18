@@ -34,6 +34,7 @@ type UsePolicyPurchaseArgs = {
   setShowBuyForm: PurchaseCallbacks["setShowBuyForm"];
   fetchMyPolicies: PurchaseCallbacks["fetchMyPolicies"];
   setLastPurchaseTx: (value: LastPurchaseTx) => void;
+  fetchUsdcOptInStatus?: () => void | Promise<unknown>;
 };
 
 export function usePolicyPurchase({
@@ -57,6 +58,7 @@ export function usePolicyPurchase({
   setShowBuyForm,
   fetchMyPolicies,
   setLastPurchaseTx,
+  fetchUsdcOptInStatus,
 }: UsePolicyPurchaseArgs) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const purchaseInFlightRef = useRef(false);
@@ -182,6 +184,10 @@ export function usePolicyPurchase({
       });
 
       setLastPurchaseTx(snapshot);
+
+      void fetchUsdcOptInStatus?.();
+      setTimeout(() => void fetchUsdcOptInStatus?.(), 800);
+      setTimeout(() => void fetchUsdcOptInStatus?.(), 2200);
 
       setFlightNumber("");
       setDepartureDate("");

@@ -15,6 +15,7 @@ import {
   useExistingPolicyForPnr,
 } from "@/components/dashboard/buy-insurance/use-buy-insurance-memos";
 import { WalletNotConnectedBanner } from "@/components/dashboard/buy-insurance/wallet-not-connected-banner";
+import { TestnetUsdcFaucetCallout } from "@/components/dashboard/buy-insurance/testnet-usdc-faucet-dialog";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -45,6 +46,8 @@ export type BuyInsuranceSectionProps = {
   myPolicies: any[];
   openPolicyModal: (policy: any) => void;
   isUsdcOptedIn: boolean | null;
+  usdcBalance: number | null;
+  canShowFaucet: boolean;
   handleOptInUsdc: () => void | Promise<void>;
   isOptingInUsdc: boolean;
   peraWallet: unknown;
@@ -77,6 +80,8 @@ export function BuyInsuranceSection({
   myPolicies,
   openPolicyModal,
   isUsdcOptedIn,
+  usdcBalance,
+  canShowFaucet,
   handleOptInUsdc,
   isOptingInUsdc,
   peraWallet,
@@ -154,6 +159,11 @@ export function BuyInsuranceSection({
                       handleOptInUsdc={handleOptInUsdc}
                     />
                   )}
+                  {isUsdcOptedIn === true &&
+                    canShowFaucet &&
+                    typeof usdcBalance === "number" && (
+                      <TestnetUsdcFaucetCallout usdcBalance={usdcBalance} />
+                    )}
 
                   <BuyFormFields
                     connected={connected}

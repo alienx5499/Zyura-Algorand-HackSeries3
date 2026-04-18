@@ -37,11 +37,6 @@ export async function GET(
     }
     const algorand = getAlgorand();
     const info = await algorand.client.algod.accountInformation(address).do();
-    const assets = (info.assets ?? []) as Array<{
-      "asset-id"?: number | bigint | string;
-      assetId?: number | bigint | string;
-    }>;
-
     const toAssetId = (value: unknown): number | null => {
       if (typeof value === "number")
         return Number.isFinite(value) ? value : null;
@@ -56,12 +51,32 @@ export async function GET(
       return null;
     };
 
-    const assetIds = assets
-      .map((a) => toAssetId(a["asset-id"] ?? a.assetId))
-      .filter((id): id is number => typeof id === "number" && id > 0);
+    const assetHoldings = (info.assets ?? []) as Array<{
+      "asset-id"?: number | bigint | string;
+      assetId?: number | bigint | string;
+      amount?: number | bigint | string;
+    }>;
+    const normalizedHoldings = assetHoldings
+      .map((a) => ({
+        assetId: toAssetId(a["asset-id"] ?? a.assetId),
+        amount:
+          typeof a.amount === "bigint"
+            ? Number(a.amount)
+            : typeof a.amount === "string"
+              ? Number(a.amount)
+              : Number(a.amount ?? 0),
+      }))
+      .filter(
+        (a): a is { assetId: number; amount: number } =>
+          typeof a.assetId === "number" &&
+          a.assetId > 0 &&
+          Number.isFinite(a.amount),
+      );
+    const assetIds = normalizedHoldings.map((a) => a.assetId);
     return NextResponse.json({
       address,
       assetIds,
+      assetHoldings: normalizedHoldings,
       microAlgos: String(info.amount ?? info.balance ?? 0),
     });
   } catch (e: unknown) {
