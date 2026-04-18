@@ -39,6 +39,10 @@ export default function FaucetPage() {
     amount: number;
     sentAtIso: string;
   } | null>(null);
+  /** Until algod/indexer reflects the transfer, show expected balance so headroom/presets stay accurate. */
+  const [balanceOptimistic, setBalanceOptimistic] = useState<number | null>(
+    null,
+  );
 
   const [walletInitComplete, setWalletInitComplete] = useState(false);
 
@@ -72,16 +76,28 @@ export default function FaucetPage() {
 
   useEffect(() => {
     setLastSend(null);
+    setBalanceOptimistic(null);
   }, [address]);
 
   const safeBalance = typeof usdcBalance === "number" ? usdcBalance : 0;
+  const displayBalance =
+    balanceOptimistic != null
+      ? Math.max(safeBalance, balanceOptimistic)
+      : safeBalance;
+
+  useEffect(() => {
+    if (balanceOptimistic == null) return;
+    if (safeBalance >= balanceOptimistic - 1e-6) {
+      setBalanceOptimistic(null);
+    }
+  }, [safeBalance, balanceOptimistic]);
 
   const allowedPresets = useMemo(
     () =>
       FAUCET_PRESET_AMOUNTS.filter(
-        (amount) => safeBalance + amount <= FAUCET_WALLET_CAP_USDC,
+        (amount) => displayBalance + amount <= FAUCET_WALLET_CAP_USDC,
       ),
-    [safeBalance],
+    [displayBalance],
   );
 
   const networkLabel =
@@ -89,7 +105,7 @@ export default function FaucetPage() {
 
   const usdcAsaId = process.env.NEXT_PUBLIC_USDC_ASA_ID ?? "";
 
-  const headroomUsdc = Math.max(0, FAUCET_WALLET_CAP_USDC - safeBalance);
+  const headroomUsdc = Math.max(0, FAUCET_WALLET_CAP_USDC - displayBalance);
 
   const maxNextPreset = useMemo(() => {
     if (allowedPresets.length === 0) return 0;
@@ -110,7 +126,7 @@ export default function FaucetPage() {
 
   const capFillPercent = Math.min(
     100,
-    Math.max(0, (safeBalance / FAUCET_WALLET_CAP_USDC) * 100),
+    Math.max(0, (displayBalance / FAUCET_WALLET_CAP_USDC) * 100),
   );
 
   if (!connected || !address) {
@@ -122,6 +138,7 @@ export default function FaucetPage() {
       toast.error("Please connect your wallet first");
       return;
     }
+    const balanceBefore = displayBalance;
     setIsRequesting(true);
     try {
       const nonce = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -149,8 +166,15 @@ export default function FaucetPage() {
           sentAtIso: new Date().toISOString(),
         });
       }
+      setBalanceOptimistic(balanceBefore + amount);
       toast.success(`Sent ${amount} test USDC`);
       await fetchUsdcOptInStatus();
+      void (async () => {
+        for (let i = 0; i < 8; i += 1) {
+          await new Promise<void>((r) => setTimeout(r, 700));
+          await fetchUsdcOptInStatus();
+        }
+      })();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
       toast.error(message || "Faucet request failed");
@@ -173,7 +197,7 @@ export default function FaucetPage() {
                 txExplorerUrl={lastTxExplorerUrl}
               />
               <FaucetRequestCard
-                safeBalance={safeBalance}
+                safeBalance={displayBalance}
                 isRequesting={isRequesting}
                 allowedPresets={allowedPresets}
                 onRequest={handleRequest}

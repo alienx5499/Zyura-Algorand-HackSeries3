@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Coins } from "lucide-react";
 
 type UsdcOptInBannerProps = {
@@ -36,18 +37,28 @@ export function UsdcOptInBanner({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button
+        <motion.button
           type="button"
           onClick={handleOptInUsdc}
           disabled={!connected || !peraWallet || isOptingInUsdc || isSubmitting}
-          className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-100 text-sm font-medium hover:bg-amber-500/30 disabled:opacity-50 transition-colors"
+          className="px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/50 text-amber-100 text-sm font-medium hover:bg-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center cursor-pointer"
+          whileTap={!isOptingInUsdc && !isSubmitting ? { scale: 0.98 } : {}}
         >
-          {isOptingInUsdc
-            ? "Sign in wallet..."
-            : !peraWallet
-              ? "Loading..."
-              : "Opt in to USDC"}
-        </button>
+          {isOptingInUsdc ? (
+            <>
+              <motion.span
+                className="inline-block w-3.5 h-3.5 mr-2 border-2 border-amber-100 border-t-transparent rounded-full shrink-0"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+              Processing...
+            </>
+          ) : !peraWallet ? (
+            "Loading..."
+          ) : (
+            "Opt in to USDC"
+          )}
+        </motion.button>
       </div>
     </div>
   );

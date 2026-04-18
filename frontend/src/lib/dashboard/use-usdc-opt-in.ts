@@ -1,9 +1,39 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import algosdk from "algosdk";
 import { toast } from "sonner";
 import { fetchAlgorandSuggestedParams } from "@/lib/dashboard/algorand-utils";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const OPTIN_PENDING_KEY = "zyura_usdc_optin_pending";
+const OPTIN_PENDING_MAX_MS = 5 * 60 * 1000;
+
+function setPendingOptInSession(address: string) {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(
+    OPTIN_PENDING_KEY,
+    JSON.stringify({ addr: address, t: Date.now() }),
+  );
+}
+
+function clearPendingOptInSession() {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(OPTIN_PENDING_KEY);
+}
+
+function readPendingOptInSession(): { addr: string; t: number } | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(OPTIN_PENDING_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw) as { addr?: string; t?: number };
+    if (!data?.addr || typeof data.t !== "number") return null;
+    return { addr: data.addr, t: data.t };
+  } catch {
+    return null;
+  }
+}
 
 async function readJsonSafe<T>(res: Response): Promise<T | null> {
   const text = await res.text();
@@ -45,7 +75,8 @@ export function useUsdcOptIn({
       }
       try {
         const acctRes = await fetch(
-          `/api/algorand/account/${encodeURIComponent(address)}`,
+          `/api/algorand/account/${encodeURIComponent(address)}?t=${Date.now()}`,
+          { cache: "no-store" },
         );
         if (!acctRes.ok) {
           setIsUsdcOptedIn(null);
@@ -82,6 +113,41 @@ export function useUsdcOptIn({
     [address, isUsdcOptedIn],
   );
 
+  const fetchUsdcOptInStatusRef = useRef(fetchUsdcOptInStatus);
+  fetchUsdcOptInStatusRef.current = fetchUsdcOptInStatus;
+
+  /** If the page remounts after opening Pera (common on mobile), restore spinner and poll until opted in. */
+  useEffect(() => {
+    if (!address) return;
+    const pending = readPendingOptInSession();
+    if (!pending || pending.addr !== address) return;
+    if (Date.now() - pending.t > OPTIN_PENDING_MAX_MS) {
+      clearPendingOptInSession();
+      return;
+    }
+    flushSync(() => {
+      setIsOptingInUsdc(true);
+    });
+    let cancelled = false;
+    const run = async () => {
+      for (let i = 0; i < 40 && !cancelled; i += 1) {
+        const ok = await fetchUsdcOptInStatusRef.current();
+        if (ok === true) {
+          clearPendingOptInSession();
+          if (!cancelled) setIsOptingInUsdc(false);
+          return;
+        }
+        await sleep(1500);
+      }
+      clearPendingOptInSession();
+      if (!cancelled) setIsOptingInUsdc(false);
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [address]);
+
   const handleOptInUsdc = useCallback(async () => {
     const currentAddress = address;
     if (!connected || !currentAddress || !peraWallet) {
@@ -93,7 +159,10 @@ export function useUsdcOptIn({
       toast.error("USDC asset ID not configured");
       return;
     }
-    setIsOptingInUsdc(true);
+    setPendingOptInSession(currentAddress);
+    flushSync(() => {
+      setIsOptingInUsdc(true);
+    });
     try {
       const { params: suggestedParams } = await fetchAlgorandSuggestedParams();
       const optInTxn =
@@ -107,10 +176,21 @@ export function useUsdcOptIn({
       toast.info("Approve the transaction in Pera Wallet to opt in to USDC");
       const signed = await peraWallet.signTransaction([[{ txn: optInTxn }]]);
       const raw = Array.isArray(signed?.[0]) ? signed[0] : signed;
-      if (!raw?.length) throw new Error("No signed transaction returned");
+      if (!raw?.length) {
+        toast.info("No signature received", {
+          description:
+            "The wallet did not return a signed transaction. Try again and approve in Pera, or dismiss this if you cancelled.",
+        });
+        return;
+      }
       const first = raw[0];
       const blob = first instanceof Uint8Array ? first : new Uint8Array(0);
-      if (blob.length === 0) throw new Error("Invalid signed transaction");
+      if (blob.length === 0) {
+        toast.info("Invalid signature from wallet", {
+          description: "Please try opting in again.",
+        });
+        return;
+      }
       const signedBase64 = Buffer.from(blob).toString("base64");
       const sendRes = await fetch("/api/algorand/send", {
         method: "POST",
@@ -134,13 +214,24 @@ export function useUsdcOptIn({
         await sleep(1200);
       }
     } catch (error: any) {
+      const message = error?.message ?? String(error);
+      const userCancelled =
+        /cancel|reject|denied|closed|user/i.test(message) ||
+        message.includes("No signed transaction");
+      if (userCancelled) {
+        toast.info("Opt-in cancelled", {
+          description: "You can try again when ready.",
+        });
+        return;
+      }
       console.error("Opt-in error:", error);
       toast.error("Opt-in failed", {
         description:
-          error?.message ||
-          "Please try again. Make sure you're on Testnet and have a small amount of ALGO for fees.",
+          message ||
+          "Please try again. Make sure you're on Testnet and have enough ALGO for fees and minimum balance.",
       });
     } finally {
+      clearPendingOptInSession();
       setIsOptingInUsdc(false);
     }
   }, [address, connected, peraWallet, fetchUsdcOptInStatus]);

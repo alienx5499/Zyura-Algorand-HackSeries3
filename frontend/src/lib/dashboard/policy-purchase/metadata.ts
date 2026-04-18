@@ -96,6 +96,7 @@ export async function preparePolicyMetadata(args: {
       : `https://testnet.explorer.perawallet.app/application/${zyuraAppIdStr}`;
   const metadata: Record<string, unknown> = {
     name: `ZYURA Policy ${policyId} · ${flightNumber}`,
+    zyura_app_id: zyuraAppIdStr,
     description: [
       `Flight delay cover - ${flightNumber}, departs ${departureIso}. Premium ${premiumUsd}, coverage ${coverageUsd}.`,
       `Policy id ${policyId} (product ${productId}).`,
@@ -208,6 +209,7 @@ export async function finalizePurchasedMetadata(args: {
   const purchasedUnix = Math.floor(Date.now() / 1000);
   const updatedMetadata = {
     ...metadata,
+    zyura_app_id: zyuraAppIdStr,
     status: "ACTIVE",
     nft_asset_id: nftAssetId,
     purchased_at: purchasedIso,

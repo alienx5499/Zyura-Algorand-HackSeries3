@@ -27,6 +27,21 @@ function setCachedPolicies(
   });
 }
 
+/** Only list policies whose metadata `zyura_app_id` matches the deployed app (hides other deployments). */
+function expectedZyuraAppId(): string {
+  return String(process.env.NEXT_PUBLIC_ZYURA_APP_ID || "").trim();
+}
+
+function policyMetadataMatchesCurrentProgram(metadata: unknown): boolean {
+  const expected = expectedZyuraAppId();
+  if (!expected) return true;
+  const m = metadata as Record<string, unknown> | null | undefined;
+  if (!m) return false;
+  const raw = m.zyura_app_id ?? m.zyuraAppId;
+  if (raw === undefined || raw === null || raw === "") return false;
+  return String(raw).trim() === expected;
+}
+
 // Use NFT-specific env vars (same as GitHub upload route)
 const GITHUB_NFT_REPO =
   process.env.GITHUB_NFT_REPO ||
@@ -260,7 +275,9 @@ async function fetchPoliciesFromIndexer(wallet: string): Promise<
         }
       }),
     );
-    return policyResults.filter((p): p is NonNullable<typeof p> => p !== null);
+    return policyResults
+      .filter((p): p is NonNullable<typeof p> => p !== null)
+      .filter((p) => policyMetadataMatchesCurrentProgram(p.metadata));
   } catch (err) {
     console.warn("Indexer fetch failed, falling back to GitHub:", err);
     return [];
@@ -651,9 +668,9 @@ export async function GET(
         }),
     );
 
-    const validPolicies = policies.filter(
-      (p): p is NonNullable<typeof p> => p !== null,
-    );
+    const validPolicies = policies
+      .filter((p): p is NonNullable<typeof p> => p !== null)
+      .filter((p) => policyMetadataMatchesCurrentProgram(p.metadata));
     // Attach assetId so "View in Explorer" links to the NFT asset page, not the wallet address
     const assetIdMap = await fetchAssetIdsByUnitName(wallet);
     for (const p of validPolicies) {
