@@ -78,7 +78,11 @@ export function PurchaseSubmitButton({
             Processing...
           </>
         ) : existingPolicyForPnr ? (
-          "Already purchased"
+          existingPolicyForPnr.__blockedOtherWallet ? (
+            "PNR unavailable"
+          ) : (
+            "Already purchased"
+          )
         ) : (
           <>
             <motion.span

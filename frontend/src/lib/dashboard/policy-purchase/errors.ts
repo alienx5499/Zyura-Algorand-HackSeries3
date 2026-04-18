@@ -50,5 +50,13 @@ export function mapPurchaseError(error: any, currentAddress: string): string {
     return "Pera already had a signing request open. Fully close the Pera app (or disconnect on this site), wait a few seconds, reconnect, and try again - approve one prompt at a time.";
   }
 
+  if (
+    /4300|invalid request format|unable to parse the transaction request/i.test(
+      msg,
+    )
+  ) {
+    return "Pera could not read the transaction group (often fixed by updating Pera Wallet, or retrying after a full app close). If this persists, try Pera Web from a desktop browser.";
+  }
+
   return msg || "Please try again.";
 }

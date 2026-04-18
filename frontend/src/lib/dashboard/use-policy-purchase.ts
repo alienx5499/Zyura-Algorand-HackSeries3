@@ -82,7 +82,14 @@ export function usePolicyPurchase({
       return;
     }
     if (existingPolicyForPnr) {
-      toast.error("You already have a policy for this PNR.");
+      const p = existingPolicyForPnr as {
+        __blockedOtherWallet?: boolean;
+      };
+      if (p.__blockedOtherWallet) {
+        toast.error("This PNR is already insured under another wallet.");
+        return;
+      }
+      toast.error("This PNR is already purchased.");
       return;
     }
 

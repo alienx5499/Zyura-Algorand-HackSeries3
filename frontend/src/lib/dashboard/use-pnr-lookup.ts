@@ -25,23 +25,19 @@ const CLIENT_CACHE_TTL_MS = 90_000;
 
 type CacheEntry = { at: number; ok: boolean; data: any };
 const pnrResponseCache = new Map<string, CacheEntry>();
-/** Bust client cache when PNR API shape changes (e.g. pnr_purchase_complete). */
-const PNR_CLIENT_CACHE_KEY_PREFIX = "v2:";
+/** Bust client cache when PNR API shape changes. */
+const PNR_CLIENT_CACHE_KEY_PREFIX = "v5:";
 
 function linkageFromSearchBody(data: any): PnrLookupLinkage | null {
   const w = typeof data?.wallet === "string" ? data.wallet.trim() : "";
   const pid = data?.policyId;
   const idNum = typeof pid === "number" ? pid : Number(pid);
   const purchaseComplete = data?.pnr_purchase_complete === true;
-  if (
-    !w ||
-    w === "NA" ||
-    !Number.isFinite(idNum) ||
-    idNum <= 0 ||
-    !purchaseComplete
-  ) {
-    return null;
-  }
+  const hasRowLink =
+    w && w !== "NA" && Number.isFinite(idNum) && idNum > 0 && purchaseComplete;
+
+  if (!hasRowLink) return null;
+
   return {
     linkedWallet: w,
     linkedPolicyId: idNum,
@@ -68,6 +64,9 @@ export function usePnrLookup({
   useEffect(() => {
     const normalized = pnr.trim().toUpperCase();
     if (!normalized || normalized.length !== 6) {
+      setFlightNumber("");
+      setDepartureDate("");
+      setDepartureTime("");
       setFetchedPassenger(null);
       setPnrStatus(null);
       setPnrRoute(null);
@@ -84,6 +83,10 @@ export function usePnrLookup({
       );
       if (cached && Date.now() - cached.at < CLIENT_CACHE_TTL_MS) {
         if (!cached.ok) {
+          setFlightNumber("");
+          setDepartureDate("");
+          setDepartureTime("");
+          setFetchedPassenger(null);
           setPnrStatus("not-found");
           setPnrRoute(null);
           setPnrLinkage?.(null);
@@ -154,6 +157,10 @@ export function usePnrLookup({
             ok: false,
             data: null,
           });
+          setFlightNumber("");
+          setDepartureDate("");
+          setDepartureTime("");
+          setFetchedPassenger(null);
           setPnrStatus("not-found");
           setPnrRoute(null);
           setPnrLinkage?.(null);
@@ -163,6 +170,10 @@ export function usePnrLookup({
           return;
         console.error("Error fetching PNR:", error);
         if (pnrRef.current.trim().toUpperCase() !== normalized) return;
+        setFlightNumber("");
+        setDepartureDate("");
+        setDepartureTime("");
+        setFetchedPassenger(null);
         setPnrStatus("not-found");
         setPnrRoute(null);
         setPnrLinkage?.(null);

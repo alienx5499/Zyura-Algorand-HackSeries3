@@ -43,19 +43,32 @@ export function useExistingPolicyForPnr(
 
     const link = pnrLinkage;
     const addr = connectedAddress?.trim();
+    const pnrUpper = pnrTrim.toUpperCase();
+
     if (
       link?.purchaseComplete &&
-      addr &&
-      link.linkedWallet === addr &&
-      link.linkedPolicyId > 0
+      link.linkedPolicyId > 0 &&
+      link.linkedWallet &&
+      link.linkedWallet !== "NA"
     ) {
-      const pnrUpper = pnrTrim.toUpperCase();
-      return {
-        id: String(link.linkedPolicyId),
-        pnr: pnrUpper,
-        metadata: { pnr: pnrUpper },
-        __syntheticFromPnrLookup: true as const,
-      };
+      if (addr && link.linkedWallet !== addr) {
+        return {
+          id: String(link.linkedPolicyId),
+          pnr: pnrUpper,
+          metadata: { pnr: pnrUpper },
+          __blockedOtherWallet: true as const,
+          linkedWallet: link.linkedWallet,
+        };
+      }
+      if (addr && link.linkedWallet === addr) {
+        return {
+          id: String(link.linkedPolicyId),
+          pnr: pnrUpper,
+          metadata: { pnr: pnrUpper },
+          __syntheticFromPnrLookup: true as const,
+          linkedWallet: link.linkedWallet,
+        };
+      }
     }
     return null;
   }, [myPolicies, pnr, pnrLinkage, connectedAddress]);

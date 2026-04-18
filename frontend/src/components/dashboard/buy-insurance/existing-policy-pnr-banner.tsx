@@ -27,23 +27,55 @@ export function ExistingPolicyPnrBanner({
           <ShieldCheck className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white">
-              You already have a policy for this PNR
+              {existingPolicyForPnr.__blockedOtherWallet
+                ? "This PNR is already insured under another wallet"
+                : "This PNR is already purchased"}
             </p>
             <p className="text-xs text-gray-300 mt-1">
-              PNR:{" "}
-              <span className="font-mono text-amber-200">
-                {getPolicyPnr(existingPolicyForPnr) || pnr.trim()}
-              </span>
-              {" · "}
-              Policy #{existingPolicyForPnr.id}
+              <>
+                PNR:{" "}
+                <span className="font-mono text-amber-200">
+                  {getPolicyPnr(existingPolicyForPnr) || pnr.trim()}
+                </span>
+                {existingPolicyForPnr.id &&
+                  String(existingPolicyForPnr.id) !== "0" && (
+                    <>
+                      {" · "}
+                      Policy #{existingPolicyForPnr.id}
+                    </>
+                  )}
+              </>
             </p>
-            <button
-              type="button"
-              onClick={() => openPolicyModal(existingPolicyForPnr)}
-              className="mt-2 text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors"
-            >
-              View policy details →
-            </button>
+            {existingPolicyForPnr.__blockedOtherWallet &&
+              existingPolicyForPnr.linkedWallet && (
+                <p className="text-xs text-gray-300 mt-1">
+                  Insured wallet:{" "}
+                  <span className="font-mono text-amber-200">
+                    {existingPolicyForPnr.linkedWallet}
+                  </span>
+                </p>
+              )}
+            {!existingPolicyForPnr.__blockedOtherWallet && (
+              <p className="text-xs text-gray-300 mt-1">
+                <>
+                  Purchase found for this PNR
+                  {existingPolicyForPnr.id &&
+                  String(existingPolicyForPnr.id) !== "0"
+                    ? ` (Policy #${existingPolicyForPnr.id})`
+                    : ""}
+                  .
+                </>
+              </p>
+            )}
+            {!existingPolicyForPnr.__blockedOtherWallet && (
+              <button
+                type="button"
+                onClick={() => openPolicyModal(existingPolicyForPnr)}
+                className="mt-2 text-xs font-medium text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                View policy details →
+              </button>
+            )}
           </div>
         </motion.div>
       )}
