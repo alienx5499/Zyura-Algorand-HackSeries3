@@ -1,4 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
+import algosdk from "algosdk";
+import { createBoxName } from "@/lib/dashboard/policy-purchase/transaction/boxes";
+import { fetchArc3MetadataJson } from "@/lib/resolve-arc3-metadata-url";
+
+const INDEXER_URL = process.env.NEXT_PUBLIC_ALGOD_URL?.includes("algonode")
+  ? "https://testnet-idx.algonode.cloud"
+  : process.env.NEXT_PUBLIC_INDEXER_URL || "https://testnet-idx.algonode.cloud";
+
+async function fetchApplicationBoxBytes(
+  appId: number,
+  boxName: Uint8Array,
+): Promise<Uint8Array | null> {
+  const algodUrl = (process.env.NEXT_PUBLIC_ALGOD_URL || "").replace(/\/$/, "");
+  const token = process.env.NEXT_PUBLIC_ALGOD_TOKEN || "";
+  if (!algodUrl) return null;
+  const u = new URL(`${algodUrl}/v2/applications/${appId}/box`);
+  u.searchParams.set("name", `b64:${Buffer.from(boxName).toString("base64")}`);
+  const res = await fetch(u.toString(), {
+    cache: "no-store",
+    headers: token ? { "X-Algo-API-Token": token } : {},
+  });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { value?: string };
+  if (!json.value) return null;
+  return new Uint8Array(Buffer.from(json.value, "base64"));
+}
+
+function decodePolTimDepartureUnix(timBytes: Uint8Array): number | null {
+  if (timBytes.length < 16) return null;
+  try {
+    return Number(algosdk.decodeUint64(timBytes.slice(8, 16), "safe"));
+  } catch {
+    return null;
+  }
+}
+
+function metadataTraitAttributes(
+  metadata: unknown,
+): Array<{ trait_type?: string; value?: unknown }> {
+  if (!metadata || typeof metadata !== "object") return [];
+  const attrs = (metadata as { attributes?: unknown }).attributes;
+  return Array.isArray(attrs) ? attrs : [];
+}
 
 type FlightQuery = {
   number: string;
@@ -112,28 +155,65 @@ function parseFlights(qs: URLSearchParams): FlightQuery[] {
 async function fetchPoliciesFromChain(
   policyIds: string[],
 ): Promise<FlightQuery[]> {
-  const program = await getProgram();
+  const appId = parseInt(process.env.NEXT_PUBLIC_ZYURA_APP_ID || "0", 10);
   const flights: FlightQuery[] = [];
 
   for (const policyIdStr of policyIds) {
     try {
       const policyIdNum = Number(policyIdStr);
-      if (!isFinite(policyIdNum)) continue;
+      if (!isFinite(policyIdNum) || policyIdNum <= 0) continue;
 
-      // Derive policy account key (contract-specific)
-      const policyIdBytes = Buffer.allocUnsafe(8);
-      policyIdBytes.writeBigUInt64LE(BigInt(policyIdNum), 0);
+      let departureUnix: number | null = null;
+      if (appId) {
+        const timBytes = await fetchApplicationBoxBytes(
+          appId,
+          createBoxName("pol_tim", policyIdNum),
+        );
+        if (timBytes) departureUnix = decodePolTimDepartureUnix(timBytes);
+      }
 
-      const [policyPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("policy"), policyIdBytes],
-        PROGRAM_ID,
+      let flightNumber = "";
+      const unit = `Z${policyIdStr}`;
+      const assetsRes = await fetch(
+        `${INDEXER_URL}/v2/assets?unit=${encodeURIComponent(unit)}`,
+        { cache: "no-store", headers: { Accept: "application/json" } },
       );
+      if (assetsRes.ok) {
+        const data = (await assetsRes.json()) as {
+          assets?: Array<{ params?: Record<string, unknown> }>;
+        };
+        for (const row of data.assets ?? []) {
+          const params = row.params;
+          if (String(params?.["unit-name"] ?? "") !== unit) continue;
+          const url = params?.url;
+          if (typeof url === "string" && url.startsWith("http")) {
+            try {
+              const { metadata } = await fetchArc3MetadataJson(url);
+              const attrs = metadataTraitAttributes(metadata);
+              const flightAttr = attrs.find((a) => a.trait_type === "Flight");
+              if (flightAttr?.value != null) {
+                flightNumber = String(flightAttr.value).trim();
+              }
+              if (departureUnix == null || departureUnix <= 0) {
+                const depAttr = attrs.find((a) => a.trait_type === "Departure");
+                if (depAttr?.value != null) {
+                  const v = String(depAttr.value).trim();
+                  const asNum = Number(v);
+                  if (Number.isFinite(asNum) && asNum > 1e9) {
+                    departureUnix = Math.floor(asNum);
+                  }
+                }
+              }
+            } catch {
+              /* metadata optional */
+            }
+          }
+          break;
+        }
+      }
 
-      const policy = (await program.account.policy.fetch(policyPda)) as any;
-      const flightNumber = policy.flightNumber || "";
-      const departureUnix = Number(policy.departureTime?.toString() || "0");
       const dateStr =
-        departureUnix > 0
+        departureUnix != null && departureUnix > 0
           ? new Date(departureUnix * 1000).toISOString().slice(0, 10)
           : undefined;
 

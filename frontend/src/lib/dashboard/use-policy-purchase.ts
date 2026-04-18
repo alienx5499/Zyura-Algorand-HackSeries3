@@ -35,6 +35,8 @@ type UsePolicyPurchaseArgs = {
   fetchMyPolicies: PurchaseCallbacks["fetchMyPolicies"];
   setLastPurchaseTx: (value: LastPurchaseTx) => void;
   fetchUsdcOptInStatus?: () => void | Promise<unknown>;
+  /** When set, purchase is blocked (same PNR already owned — from list or PNR lookup). */
+  existingPolicyForPnr?: unknown | null;
 };
 
 export function usePolicyPurchase({
@@ -59,6 +61,7 @@ export function usePolicyPurchase({
   fetchMyPolicies,
   setLastPurchaseTx,
   fetchUsdcOptInStatus,
+  existingPolicyForPnr,
 }: UsePolicyPurchaseArgs) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const purchaseInFlightRef = useRef(false);
@@ -76,6 +79,10 @@ export function usePolicyPurchase({
     }
     if (pnr.length !== 6) {
       toast.error("PNR must be exactly 6 characters");
+      return;
+    }
+    if (existingPolicyForPnr) {
+      toast.error("You already have a policy for this PNR.");
       return;
     }
 

@@ -1,5 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import algosdk from "algosdk";
+import { createBoxName } from "@/lib/dashboard/policy-purchase/transaction/boxes";
 import { githubFlightPath } from "@/lib/github-metadata-paths";
+
+/** Read `pol_holder` box (32-byte address) for an Algorand Zyura policy id. */
+async function fetchPolicyHolderFromApp(
+  policyId: number,
+): Promise<string | null> {
+  const appId = parseInt(process.env.NEXT_PUBLIC_ZYURA_APP_ID || "0", 10);
+  const algodUrl = (process.env.NEXT_PUBLIC_ALGOD_URL || "").replace(/\/$/, "");
+  const token = process.env.NEXT_PUBLIC_ALGOD_TOKEN || "";
+  if (!appId || !algodUrl) return null;
+
+  const boxName = createBoxName("pol_holder", policyId);
+  const u = new URL(`${algodUrl}/v2/applications/${appId}/box`);
+  u.searchParams.set("name", `b64:${Buffer.from(boxName).toString("base64")}`);
+  const res = await fetch(u.toString(), {
+    cache: "no-store",
+    headers: token ? { "X-Algo-API-Token": token } : {},
+  });
+  if (!res.ok) return null;
+  const json = (await res.json()) as { value?: string };
+  if (!json.value) return null;
+  const bytes = new Uint8Array(Buffer.from(json.value, "base64"));
+  if (bytes.length < 32) return null;
+  return algosdk.encodeAddress(bytes.slice(0, 32));
+}
 
 const FLIGHT_REPO =
   process.env.GITHUB_FLIGHT_REPO ||
@@ -218,17 +244,12 @@ export async function POST(req: NextRequest) {
     // Fetch policy details from-chain if policyId provided
     let policyholder: string | undefined;
 
-    if (body.policyId) {
+    if (body.policyId != null) {
       try {
-        const program = await getProgram();
-        const idBytes = Buffer.allocUnsafe(8);
-        idBytes.writeBigUInt64LE(BigInt(body.policyId), 0);
-        const [policyPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from("policy"), idBytes],
-          PROGRAM_ID,
-        );
-        const policy: any = await program.account.policy.fetch(policyPda);
-        policyholder = new PublicKey(policy.policyholder).toBase58();
+        const id = Number(body.policyId);
+        if (Number.isFinite(id) && id > 0) {
+          policyholder = (await fetchPolicyHolderFromApp(id)) ?? undefined;
+        }
       } catch (err) {
         console.error("Failed to fetch policy from-chain:", err);
       }

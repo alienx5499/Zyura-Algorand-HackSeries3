@@ -2,6 +2,13 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { PnrFlightRoute, PnrStatus } from "@/lib/dashboard/types";
 
+/** From /api/zyura/pnr/search — used to block repurchase when myPolicies is stale. */
+export type PnrLookupLinkage = {
+  linkedWallet: string;
+  linkedPolicyId: number;
+  purchaseComplete: boolean;
+};
+
 type UsePnrLookupArgs = {
   pnr: string;
   setFlightNumber: (value: string) => void;
@@ -10,6 +17,7 @@ type UsePnrLookupArgs = {
   setFetchedPassenger: (value: any | null) => void;
   setPnrStatus: (value: PnrStatus) => void;
   setPnrRoute: (value: PnrFlightRoute | null) => void;
+  setPnrLinkage?: (value: PnrLookupLinkage | null) => void;
 };
 
 const DEBOUNCE_MS = 220;
@@ -17,6 +25,29 @@ const CLIENT_CACHE_TTL_MS = 90_000;
 
 type CacheEntry = { at: number; ok: boolean; data: any };
 const pnrResponseCache = new Map<string, CacheEntry>();
+/** Bust client cache when PNR API shape changes (e.g. pnr_purchase_complete). */
+const PNR_CLIENT_CACHE_KEY_PREFIX = "v2:";
+
+function linkageFromSearchBody(data: any): PnrLookupLinkage | null {
+  const w = typeof data?.wallet === "string" ? data.wallet.trim() : "";
+  const pid = data?.policyId;
+  const idNum = typeof pid === "number" ? pid : Number(pid);
+  const purchaseComplete = data?.pnr_purchase_complete === true;
+  if (
+    !w ||
+    w === "NA" ||
+    !Number.isFinite(idNum) ||
+    idNum <= 0 ||
+    !purchaseComplete
+  ) {
+    return null;
+  }
+  return {
+    linkedWallet: w,
+    linkedPolicyId: idNum,
+    purchaseComplete: true,
+  };
+}
 
 export function usePnrLookup({
   pnr,
@@ -26,6 +57,7 @@ export function usePnrLookup({
   setFetchedPassenger,
   setPnrStatus,
   setPnrRoute,
+  setPnrLinkage,
 }: UsePnrLookupArgs) {
   const pnrRef = useRef(pnr);
 
@@ -39,6 +71,7 @@ export function usePnrLookup({
       setFetchedPassenger(null);
       setPnrStatus(null);
       setPnrRoute(null);
+      setPnrLinkage?.(null);
       return;
     }
 
@@ -46,11 +79,14 @@ export function usePnrLookup({
     const t = window.setTimeout(async () => {
       if (pnrRef.current.trim().toUpperCase() !== normalized) return;
 
-      const cached = pnrResponseCache.get(normalized);
+      const cached = pnrResponseCache.get(
+        `${PNR_CLIENT_CACHE_KEY_PREFIX}${normalized}`,
+      );
       if (cached && Date.now() - cached.at < CLIENT_CACHE_TTL_MS) {
         if (!cached.ok) {
           setPnrStatus("not-found");
           setPnrRoute(null);
+          setPnrLinkage?.(null);
           return;
         }
         const data = cached.data;
@@ -70,6 +106,7 @@ export function usePnrLookup({
           });
         } else setPnrRoute(null);
         setPnrStatus("found");
+        setPnrLinkage?.(linkageFromSearchBody(data));
         return;
       }
 
@@ -84,7 +121,7 @@ export function usePnrLookup({
 
         if (response.ok) {
           const data = await response.json();
-          pnrResponseCache.set(normalized, {
+          pnrResponseCache.set(`${PNR_CLIENT_CACHE_KEY_PREFIX}${normalized}`, {
             at: Date.now(),
             ok: true,
             data,
@@ -107,17 +144,19 @@ export function usePnrLookup({
             });
           } else setPnrRoute(null);
           setPnrStatus("found");
+          setPnrLinkage?.(linkageFromSearchBody(data));
           toast.success("PNR found! Details auto-filled.", {
             id: "pnr-lookup-success",
           });
         } else {
-          pnrResponseCache.set(normalized, {
+          pnrResponseCache.set(`${PNR_CLIENT_CACHE_KEY_PREFIX}${normalized}`, {
             at: Date.now(),
             ok: false,
             data: null,
           });
           setPnrStatus("not-found");
           setPnrRoute(null);
+          setPnrLinkage?.(null);
         }
       } catch (error: unknown) {
         if (error instanceof DOMException && error.name === "AbortError")
@@ -126,6 +165,7 @@ export function usePnrLookup({
         if (pnrRef.current.trim().toUpperCase() !== normalized) return;
         setPnrStatus("not-found");
         setPnrRoute(null);
+        setPnrLinkage?.(null);
       }
     }, DEBOUNCE_MS);
 
@@ -139,6 +179,7 @@ export function usePnrLookup({
     setDepartureTime,
     setFetchedPassenger,
     setFlightNumber,
+    setPnrLinkage,
     setPnrRoute,
     setPnrStatus,
   ]);

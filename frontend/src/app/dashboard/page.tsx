@@ -22,8 +22,12 @@ import { useLastPurchaseTx } from "@/lib/dashboard/use-last-purchase-tx";
 import { usePolicyModal } from "@/lib/dashboard/use-policy-modal";
 import { usePolicyPurchase } from "@/lib/dashboard/use-policy-purchase";
 import { useDashboardSectionNavigation } from "@/lib/dashboard/use-dashboard-section-navigation";
-import { usePnrLookup } from "@/lib/dashboard/use-pnr-lookup";
+import {
+  usePnrLookup,
+  type PnrLookupLinkage,
+} from "@/lib/dashboard/use-pnr-lookup";
 import { useUsdcOptIn } from "@/lib/dashboard/use-usdc-opt-in";
+import { useExistingPolicyForPnr } from "@/components/dashboard/buy-insurance/use-buy-insurance-memos";
 import type { PnrFlightRoute, PnrStatus } from "@/lib/dashboard/types";
 
 export default function DashboardPage() {
@@ -105,6 +109,7 @@ export default function DashboardPage() {
   const [fetchedPassenger, setFetchedPassenger] = useState<any | null>(null);
   const [pnrStatus, setPnrStatus] = useState<PnrStatus>(null);
   const [pnrRoute, setPnrRoute] = useState<PnrFlightRoute | null>(null);
+  const [pnrLinkage, setPnrLinkage] = useState<PnrLookupLinkage | null>(null);
   const { activeSection } = useDashboardSectionNavigation();
   const {
     isOptingInUsdc,
@@ -120,6 +125,25 @@ export default function DashboardPage() {
     peraWallet,
   });
   const [showAllPolicies, setShowAllPolicies] = useState(false);
+
+  usePnrLookup({
+    pnr,
+    setFlightNumber,
+    setDepartureDate,
+    setDepartureTime,
+    setFetchedPassenger,
+    setPnrStatus,
+    setPnrRoute,
+    setPnrLinkage,
+  });
+
+  const existingPolicyForPnr = useExistingPolicyForPnr(
+    myPolicies,
+    pnr,
+    pnrLinkage,
+    address,
+  );
+
   const { isSubmitting, handleBuy } = usePolicyPurchase({
     connected,
     address,
@@ -142,6 +166,7 @@ export default function DashboardPage() {
     fetchMyPolicies,
     setLastPurchaseTx,
     fetchUsdcOptInStatus,
+    existingPolicyForPnr,
   });
 
   // Fetch products on mount
@@ -177,16 +202,6 @@ export default function DashboardPage() {
     resetPoliciesState,
     setIsUsdcOptedIn,
   ]);
-
-  usePnrLookup({
-    pnr,
-    setFlightNumber,
-    setDepartureDate,
-    setDepartureTime,
-    setFetchedPassenger,
-    setPnrStatus,
-    setPnrRoute,
-  });
 
   // Don't show dashboard content to unconnected users
   // But allow page to mount so wallet connect can initialize
@@ -313,7 +328,7 @@ export default function DashboardPage() {
                 setDepartureTime={setDepartureTime}
                 fetchedPassenger={fetchedPassenger}
                 setFetchedPassenger={setFetchedPassenger}
-                myPolicies={myPolicies}
+                existingPolicyForPnr={existingPolicyForPnr}
                 openPolicyModal={openPolicyModal}
                 isUsdcOptedIn={isUsdcOptedIn}
                 usdcBalance={usdcBalance}

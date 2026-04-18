@@ -17,6 +17,85 @@ export type PurchaseBuildSendResult = {
   currentAddress: string;
 };
 
+/**
+ * Pera mobile drops unsigned slots (issuer-signed txns use `signers: []`) via
+ * `response.filter(Boolean)`, so the returned array length is often `nTx - 2`
+ * instead of `nTx`. Web may return the full `nTx` list. Merge both shapes.
+ */
+function normalizePeraSignedResponse(raw: unknown): Uint8Array[] {
+  if (raw == null) return [];
+  let arr: unknown = raw;
+  if (Array.isArray(arr) && arr.length === 1 && Array.isArray(arr[0])) {
+    arr = arr[0];
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr.map((item) => {
+    if (item instanceof Uint8Array) return item;
+    if (typeof Buffer !== "undefined" && Buffer.isBuffer(item)) {
+      return new Uint8Array(item);
+    }
+    return new Uint8Array(0);
+  });
+}
+
+function mergeAtomicGroupSignaturesWithIssuerBlobs(params: {
+  nTx: number;
+  idxXfer: number;
+  idxFreeze: number;
+  signedXferBlob: Uint8Array;
+  signedFreezeBlob: Uint8Array;
+  walletSigs: Uint8Array[];
+}): Uint8Array[] {
+  const {
+    nTx,
+    idxXfer,
+    idxFreeze,
+    signedXferBlob,
+    signedFreezeBlob,
+    walletSigs,
+  } = params;
+  const merged = new Array<Uint8Array>(nTx);
+  const expectedUserSigned = nTx - 2;
+
+  const assertNonEmpty = (sig: Uint8Array, index: number) => {
+    if (!(sig instanceof Uint8Array) || sig.length === 0) {
+      throw new Error(
+        `Wallet missing signature for transaction index ${index}. Approve the full group in Pera, or try again.`,
+      );
+    }
+  };
+
+  if (walletSigs.length === nTx) {
+    for (let i = 0; i < nTx; i++) {
+      if (i === idxXfer) merged[i] = signedXferBlob;
+      else if (i === idxFreeze) merged[i] = signedFreezeBlob;
+      else {
+        assertNonEmpty(walletSigs[i]!, i);
+        merged[i] = walletSigs[i]!;
+      }
+    }
+    return merged;
+  }
+
+  if (walletSigs.length === expectedUserSigned) {
+    let w = 0;
+    for (let i = 0; i < nTx; i++) {
+      if (i === idxXfer) merged[i] = signedXferBlob;
+      else if (i === idxFreeze) merged[i] = signedFreezeBlob;
+      else {
+        const s = walletSigs[w++];
+        assertNonEmpty(s, i);
+        merged[i] = s;
+      }
+    }
+    return merged;
+  }
+
+  throw new Error(
+    `Wallet returned ${walletSigs.length} signatures; expected ${nTx} (full group) or ${expectedUserSigned} (mobile, issuer txns omitted). Try again or update Pera Wallet.`,
+  );
+}
+
 export async function buildAndSendPurchaseGroup(
   args: PurchaseExecutionInput,
 ): Promise<PurchaseBuildSendResult> {
@@ -313,42 +392,21 @@ export async function buildAndSendPurchaseGroup(
       message: labels[i] ?? `Transaction ${i + 1}`,
     })),
   ]);
-  const parts =
-    signedRaw?.length === 1 && Array.isArray(signedRaw[0])
-      ? signedRaw[0]
-      : signedRaw;
-  if (!parts || parts.length < nTx) {
-    throw new Error(
-      "Wallet did not return a full signature set for the atomic group - try again.",
-    );
-  }
+  const walletSigs = normalizePeraSignedResponse(signedRaw);
+  const merged = mergeAtomicGroupSignaturesWithIssuerBlobs({
+    nTx,
+    idxXfer,
+    idxFreeze,
+    signedXferBlob,
+    signedFreezeBlob,
+    walletSigs,
+  });
 
-  const combined = new Uint8Array(
-    Array.from({ length: nTx }, (_, i) => {
-      if (i === idxXfer) return signedXferBlob.length;
-      if (i === idxFreeze) return signedFreezeBlob.length;
-      const p = parts[i];
-      return p instanceof Uint8Array ? p.length : 0;
-    }).reduce((a, b) => a + b, 0),
-  );
+  const combined = new Uint8Array(merged.reduce((sum, p) => sum + p.length, 0));
   let cOff = 0;
-  for (let i = 0; i < nTx; i++) {
-    if (i === idxXfer) {
-      combined.set(signedXferBlob, cOff);
-      cOff += signedXferBlob.length;
-    } else if (i === idxFreeze) {
-      combined.set(signedFreezeBlob, cOff);
-      cOff += signedFreezeBlob.length;
-    } else {
-      const p = parts[i];
-      if (!(p instanceof Uint8Array) || !p.length) {
-        throw new Error(
-          `Wallet missing signature for transaction index ${i} - try again.`,
-        );
-      }
-      combined.set(p, cOff);
-      cOff += p.length;
-    }
+  for (const p of merged) {
+    combined.set(p, cOff);
+    cOff += p.length;
   }
 
   const signedBase64 = Buffer.from(combined).toString("base64");

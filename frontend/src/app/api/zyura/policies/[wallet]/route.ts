@@ -58,6 +58,38 @@ function policyMetadataMatchesCurrentProgram(metadata: unknown): boolean {
   return String(raw).trim() === expected;
 }
 
+/**
+ * Pre-signing uploads set `status: PENDING_CONFIRMATION` in GitHub. If the user
+ * never completes the atomic purchase (or cleanup misses), metadata + optional
+ * pre-mint NFT would still surface — hide these drafts from "My Policies".
+ * Completed purchases set `purchased_at` / `nft_asset_id` in finalizePurchasedMetadata.
+ */
+function isUnconfirmedPolicyDraftMetadata(metadata: unknown): boolean {
+  if (!metadata || typeof metadata !== "object") return false;
+  const m = metadata as Record<string, unknown>;
+  if (m.purchased_at != null || m.purchased_at_unix != null) return false;
+  const nftId = m.nft_asset_id;
+  if (nftId != null && String(nftId).trim() !== "") return false;
+
+  const norm = (s: string) =>
+    s.trim().toUpperCase().replace(/\s+/g, "_").replace(/-/g, "_");
+
+  const top = m.status;
+  if (typeof top === "string") {
+    const n = norm(top);
+    if (n === "PENDING_CONFIRMATION" || n === "PENDING") return true;
+  }
+
+  const attrs = Array.isArray(m.attributes) ? m.attributes : [];
+  for (const a of attrs as Array<{ trait_type?: string; value?: unknown }>) {
+    if (a?.trait_type !== "Status" || typeof a.value !== "string") continue;
+    const v = norm(a.value);
+    if (v.includes("PENDING") && !v.includes("ACTIVE")) return true;
+  }
+
+  return false;
+}
+
 // Use NFT-specific env vars (same as GitHub upload route)
 const GITHUB_NFT_REPO =
   process.env.GITHUB_NFT_REPO ||
@@ -199,17 +231,24 @@ async function fetchPoliciesFromIndexer(wallet: string): Promise<
 
         try {
           let policyMetadata: any;
-          let metadataUrlUsed: string;
+          let metadataUrlUsed: string = knownMetadataUrl;
           const knownRes = await fetch(knownMetadataUrl, { cache: "no-store" });
+          if (knownRes.ok) {
+            try {
+              const text = await knownRes.text();
+              const parsed: unknown = JSON.parse(text);
+              if (parsed && typeof parsed === "object") {
+                policyMetadata = parsed as any;
+              }
+            } catch {
+              /* fall through to ARC-3 URL */
+            }
+          }
           if (
-            knownRes.ok &&
-            (knownRes.headers.get("content-type") || "").includes(
-              "application/json",
-            )
+            !policyMetadata &&
+            assetUrl &&
+            String(assetUrl).startsWith("http")
           ) {
-            policyMetadata = await knownRes.json();
-            metadataUrlUsed = knownMetadataUrl;
-          } else if (assetUrl && String(assetUrl).startsWith("http")) {
             try {
               const { metadata, canonicalUrl } = await fetchArc3MetadataJson(
                 String(assetUrl),
@@ -219,7 +258,7 @@ async function fetchPoliciesFromIndexer(wallet: string): Promise<
             } catch {
               return null;
             }
-          } else {
+          } else if (!policyMetadata) {
             return null;
           }
           if (!policyMetadata) return null;
@@ -293,7 +332,8 @@ async function fetchPoliciesFromIndexer(wallet: string): Promise<
     );
     return policyResults
       .filter((p): p is NonNullable<typeof p> => p !== null)
-      .filter((p) => policyMetadataMatchesCurrentProgram(p.metadata));
+      .filter((p) => policyMetadataMatchesCurrentProgram(p.metadata))
+      .filter((p) => !isUnconfirmedPolicyDraftMetadata(p.metadata));
   } catch (err) {
     console.warn("Indexer fetch failed, falling back to GitHub:", err);
     return [];
@@ -682,7 +722,8 @@ export async function GET(
 
     const validPolicies = policies
       .filter((p): p is NonNullable<typeof p> => p !== null)
-      .filter((p) => policyMetadataMatchesCurrentProgram(p.metadata));
+      .filter((p) => policyMetadataMatchesCurrentProgram(p.metadata))
+      .filter((p) => !isUnconfirmedPolicyDraftMetadata(p.metadata));
     // Attach assetId so "View in Explorer" links to the NFT asset page, not the wallet address
     const assetIdMap = await fetchAssetIdsByUnitName(wallet);
     for (const p of validPolicies) {

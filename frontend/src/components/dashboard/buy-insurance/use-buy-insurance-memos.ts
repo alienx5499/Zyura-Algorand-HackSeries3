@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { getPolicyPnr } from "@/components/dashboard/buy-insurance/get-policy-pnr";
+import type { PnrLookupLinkage } from "@/lib/dashboard/use-pnr-lookup";
 
 export function useDepartureTimeOptions() {
   return useMemo(() => {
@@ -22,17 +23,40 @@ export function useDepartureTimeOptions() {
   }, []);
 }
 
-export function useExistingPolicyForPnr(myPolicies: any[], pnr: string) {
+export function useExistingPolicyForPnr(
+  myPolicies: any[],
+  pnr: string,
+  pnrLinkage: PnrLookupLinkage | null | undefined,
+  connectedAddress: string | null | undefined,
+) {
   return useMemo(() => {
     const pnrTrim = pnr.trim();
     if (!pnrTrim) return null;
-    return (
+    const fromList =
       myPolicies.find((p) => {
         const existingPnr = getPolicyPnr(p);
         return (
           existingPnr && existingPnr.toLowerCase() === pnrTrim.toLowerCase()
         );
-      }) ?? null
-    );
-  }, [myPolicies, pnr]);
+      }) ?? null;
+    if (fromList) return fromList;
+
+    const link = pnrLinkage;
+    const addr = connectedAddress?.trim();
+    if (
+      link?.purchaseComplete &&
+      addr &&
+      link.linkedWallet === addr &&
+      link.linkedPolicyId > 0
+    ) {
+      const pnrUpper = pnrTrim.toUpperCase();
+      return {
+        id: String(link.linkedPolicyId),
+        pnr: pnrUpper,
+        metadata: { pnr: pnrUpper },
+        __syntheticFromPnrLookup: true as const,
+      };
+    }
+    return null;
+  }, [myPolicies, pnr, pnrLinkage, connectedAddress]);
 }

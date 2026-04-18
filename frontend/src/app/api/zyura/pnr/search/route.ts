@@ -1,14 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
 import { unstable_cache } from "next/cache";
-import { githubFlightPath } from "@/lib/github-metadata-paths";
+import { githubFlightPath, githubNftPath } from "@/lib/github-metadata-paths";
 
 const FLIGHT_REPO =
   process.env.GITHUB_FLIGHT_REPO ||
   process.env.GITHUB_METADATA_REPO ||
   "alienx5499/Zyura-Algorand-HackSeries3-MetaData";
+const GITHUB_NFT_REPO =
+  process.env.GITHUB_NFT_REPO ||
+  process.env.GITHUB_METADATA_REPO ||
+  FLIGHT_REPO;
 const GITHUB_BRANCH =
   process.env.GITHUB_FLIGHT_BRANCH || process.env.GITHUB_BRANCH || "main";
 const FLIGHT_PATH = githubFlightPath();
+const NFT_METADATA_PATH = githubNftPath();
+
+/** True when GitHub policy.json shows a completed purchase (mirrors finalizePurchasedMetadata). */
+async function isPolicyPurchasedOnGithub(
+  wallet: string,
+  policyId: number,
+): Promise<boolean> {
+  const w = wallet.trim();
+  if (!w || w === "NA" || !Number.isFinite(policyId) || policyId <= 0) {
+    return false;
+  }
+  const url = `https://raw.githubusercontent.com/${GITHUB_NFT_REPO}/${GITHUB_BRANCH}/${NFT_METADATA_PATH}/${w}/${policyId}/policy.json`;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return false;
+    const j = (await res.json()) as {
+      status?: string;
+      nft_asset_id?: unknown;
+    };
+    const st = String(j?.status ?? "").toUpperCase();
+    const nft = j?.nft_asset_id;
+    const hasNft =
+      nft != null && String(nft).trim() !== "" && String(nft).trim() !== "0";
+    return st === "ACTIVE" && hasNft;
+  } catch {
+    return false;
+  }
+}
 
 const getFlightFolderNamesCached = unstable_cache(
   async (): Promise<string[]> => {
@@ -118,6 +150,27 @@ export async function GET(req: NextRequest) {
     );
     if (found) {
       const { flightData, matchingPnr } = found;
+      const linkedPidRaw = matchingPnr.policyId;
+      const linkedPolicyId =
+        typeof linkedPidRaw === "number" && linkedPidRaw > 0
+          ? linkedPidRaw
+          : undefined;
+      const linkedWalletRaw = matchingPnr.wallet;
+      const linkedWallet =
+        typeof linkedWalletRaw === "string" &&
+        linkedWalletRaw.trim() &&
+        linkedWalletRaw !== "NA"
+          ? linkedWalletRaw.trim()
+          : undefined;
+
+      let pnrPurchaseComplete = false;
+      if (linkedPolicyId != null && linkedWallet) {
+        pnrPurchaseComplete = await isPolicyPurchasedOnGithub(
+          linkedWallet,
+          linkedPolicyId,
+        );
+      }
+
       const passenger = matchingPnr.passenger || null;
       const normalizedPassenger = passenger
         ? {
@@ -162,6 +215,8 @@ export async function GET(req: NextRequest) {
         policyId: matchingPnr.policyId,
         policyholder: matchingPnr.policyholder,
         nft_metadata_url: matchingPnr.nft_metadata_url,
+        /** When true, GitHub policy.json is ACTIVE with nft_asset_id — safe to block another purchase for this wallet. */
+        pnr_purchase_complete: pnrPurchaseComplete,
         as_of: Math.floor(Date.now() / 1000),
       });
       res.headers.set(

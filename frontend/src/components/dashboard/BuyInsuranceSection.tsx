@@ -10,10 +10,7 @@ import { PassengerDetailsCard } from "@/components/dashboard/buy-insurance/passe
 import { PurchaseSubmitButton } from "@/components/dashboard/buy-insurance/purchase-submit-button";
 import type { PnrStatus } from "@/lib/dashboard/types";
 import { UsdcOptInBanner } from "@/components/dashboard/buy-insurance/usdc-opt-in-banner";
-import {
-  useDepartureTimeOptions,
-  useExistingPolicyForPnr,
-} from "@/components/dashboard/buy-insurance/use-buy-insurance-memos";
+import { useDepartureTimeOptions } from "@/components/dashboard/buy-insurance/use-buy-insurance-memos";
 import { WalletNotConnectedBanner } from "@/components/dashboard/buy-insurance/wallet-not-connected-banner";
 import { TestnetUsdcFaucetCallout } from "@/components/dashboard/buy-insurance/testnet-usdc-faucet-dialog";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
@@ -43,7 +40,7 @@ export type BuyInsuranceSectionProps = {
   setDepartureTime: (value: string) => void;
   fetchedPassenger: any | null;
   setFetchedPassenger: (value: any | null) => void;
-  myPolicies: any[];
+  existingPolicyForPnr: any | null;
   openPolicyModal: (policy: any) => void;
   isUsdcOptedIn: boolean | null;
   usdcBalance: number | null;
@@ -77,7 +74,7 @@ export function BuyInsuranceSection({
   setDepartureTime,
   fetchedPassenger,
   setFetchedPassenger,
-  myPolicies,
+  existingPolicyForPnr,
   openPolicyModal,
   isUsdcOptedIn,
   usdcBalance,
@@ -87,7 +84,6 @@ export function BuyInsuranceSection({
   peraWallet,
 }: BuyInsuranceSectionProps) {
   const timeOptions = useDepartureTimeOptions();
-  const existingPolicyForPnr = useExistingPolicyForPnr(myPolicies, pnr);
 
   return (
     <motion.section
