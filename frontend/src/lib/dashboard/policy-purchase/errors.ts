@@ -5,6 +5,7 @@ export function mapPurchaseError(error: any, currentAddress: string): string {
   const isMinBalance =
     /balance\s+\d+\s+below\s+min\s+\d+/i.test(msg) ||
     /below min.*\(0 assets\)/i.test(msg);
+  const minBalanceMatch = msg.match(/balance\s+(\d+)\s+below\s+min\s+(\d+)/i);
   const shortAccountMatch = msg.match(/account\s+([A-Z2-7]{58})\s+balance/);
   const usdcAssetId = process.env.NEXT_PUBLIC_USDC_ASA_ID || "755796399";
 
@@ -16,7 +17,16 @@ export function mapPurchaseError(error: any, currentAddress: string): string {
     const shortAddr = shortAccountMatch ? shortAccountMatch[1] : null;
     const isYourWallet = shortAddr && shortAddr === currentAddress;
     if (isYourWallet) {
-      return "Your ALGO balance is below the network minimum for this transaction. Add at least 0.1 ALGO and try again.";
+      if (minBalanceMatch) {
+        const balanceMicro = Number(minBalanceMatch[1]);
+        const minMicro = Number(minBalanceMatch[2]);
+        if (Number.isFinite(balanceMicro) && Number.isFinite(minMicro)) {
+          const shortfallMicro = Math.max(minMicro - balanceMicro, 0);
+          const shortfallAlgo = shortfallMicro / 1_000_000;
+          return `Your wallet has ALGO, but it is locked as network minimum balance (spendable is near 0). Add at least ${shortfallAlgo.toFixed(3)} ALGO and try again.`;
+        }
+      }
+      return "Your wallet has ALGO, but it is locked as network minimum balance (spendable is near 0). Add a little more ALGO and try again.";
     }
     if (shortAddr) {
       console.warn(
