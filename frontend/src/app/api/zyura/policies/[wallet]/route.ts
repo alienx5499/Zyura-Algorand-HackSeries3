@@ -3,6 +3,20 @@ import algosdk from "algosdk";
 import { githubNftPath } from "@/lib/github-metadata-paths";
 import { fetchArc3MetadataJson } from "@/lib/resolve-arc3-metadata-url";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+function githubContentsHeaders(): HeadersInit {
+  const token = process.env.GITHUB_TOKEN || process.env.GITHUB_PAT;
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 // Short-lived in-memory cache (helps when VPN adds latency; reload/second request is instant)
 const POLICIES_CACHE_TTL_MS = 25_000; // 25s
 const policiesCache = new Map<
@@ -36,9 +50,11 @@ function policyMetadataMatchesCurrentProgram(metadata: unknown): boolean {
   const expected = expectedZyuraAppId();
   if (!expected) return true;
   const m = metadata as Record<string, unknown> | null | undefined;
-  if (!m) return false;
+  if (!m) return true;
   const raw = m.zyura_app_id ?? m.zyuraAppId;
-  if (raw === undefined || raw === null || raw === "") return false;
+  // Legacy policy metadata may not include app id fields.
+  // Keep these visible so older valid policies are not hidden in dashboard.
+  if (raw === undefined || raw === null || raw === "") return true;
   return String(raw).trim() === expected;
 }
 
@@ -515,9 +531,7 @@ export async function GET(
     const metadataListUrl = `https://api.github.com/repos/${GITHUB_NFT_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
     const metadataListResponse = await fetch(metadataListUrl, {
       cache: "no-store",
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-      },
+      headers: githubContentsHeaders(),
     });
 
     let walletAddressInGitHub: string | null = null;
@@ -546,9 +560,7 @@ export async function GET(
     const listUrl = `https://api.github.com/repos/${GITHUB_NFT_REPO}/contents/${GITHUB_PATH}/${walletAddressInGitHub}?ref=${GITHUB_BRANCH}`;
     const listResponse = await fetch(listUrl, {
       cache: "no-store",
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-      },
+      headers: githubContentsHeaders(),
     });
 
     if (!listResponse.ok) {

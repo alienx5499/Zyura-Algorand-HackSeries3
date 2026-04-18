@@ -129,6 +129,7 @@ export const metadata: Metadata = {
   referrer: "origin-when-cross-origin",
   manifest: "/manifest.json",
   other: {
+    "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "format-detection": "telephone=no",
