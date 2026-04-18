@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,10 +9,41 @@ import { toast } from "sonner";
 import { Mail, MessageCircle, Phone, MapPin } from "lucide-react";
 
 const ContactSection = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Your message has been sent! We'll get back to you shortly.");
-    (e.target as HTMLFormElement).reset();
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, message }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : "Failed to send message.",
+        );
+      }
+      toast.success(
+        "Your message has been sent! We'll get back to you shortly.",
+      );
+      setName("");
+      setEmail("");
+      setMessage("");
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to send message.";
+      toast.error(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactMethods = [
@@ -107,8 +138,10 @@ const ContactSection = () => {
                       </Label>
                       <Input
                         id="name"
-                        placeholder="Your Name"
+                        placeholder="Enter your name"
                         required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
                         className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-400 focus:border-purple-400 focus:ring-purple-400/20"
                       />
                     </div>
@@ -119,22 +152,13 @@ const ContactSection = () => {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="your.email@example.com"
+                        placeholder="Enter your email"
                         required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-400 focus:border-purple-400 focus:ring-purple-400/20"
                       />
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="subject" className="text-neutral-200">
-                      Subject
-                    </Label>
-                    <Input
-                      id="subject"
-                      placeholder="What's this about?"
-                      required
-                      className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-400 focus:border-purple-400 focus:ring-purple-400/20"
-                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="message" className="text-neutral-200">
@@ -142,17 +166,20 @@ const ContactSection = () => {
                     </Label>
                     <Textarea
                       id="message"
-                      placeholder="How can we help you with ZYURA?"
+                      placeholder="Enter your message"
                       required
                       rows={5}
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
                       className="bg-gray-800/50 border-gray-600/50 text-white placeholder:text-gray-400 focus:border-purple-400 focus:ring-purple-400/20 resize-none"
                     />
                   </div>
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white font-semibold py-3 transition-all duration-300 transform hover:scale-[1.02]"
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white font-semibold py-3 transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-60"
                   >
-                    Send Message
+                    {isSubmitting ? "Sending…" : "Send Message"}
                   </Button>
                 </form>
               </CardContent>

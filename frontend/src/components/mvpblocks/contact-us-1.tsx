@@ -34,12 +34,7 @@ export default function ContactUs1() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name,
-          email,
-          message,
-          subject: "Contact Form Submission",
-        }),
+        body: JSON.stringify({ name, email, message }),
       });
 
       const data = await response.json();

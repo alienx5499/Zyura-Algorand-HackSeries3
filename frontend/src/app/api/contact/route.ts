@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, subject, message } = body;
+    const { name, email, message, subject: subjectFromBody } = body;
 
     // Validate input
     if (!name || !email || !message) {
@@ -36,14 +36,28 @@ export async function POST(request: Request) {
     }
 
     // Prepare template parameters - ensure all values are strings
+    const siteUrl = (
+      process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+    ).replace(/\/$/, "");
+
+    const nameTrim = String(name?.trim() || "");
+    /** Forms only collect name + email + message; subject defaults for EmailJS {{title}} / {{subject}}. */
+    const subjectLine = String(
+      subjectFromBody?.trim() || "Contact Form Submission",
+    );
+    const nameInitial = nameTrim ? nameTrim.charAt(0).toUpperCase() : "?";
     const templateParams = {
-      name: String(name?.trim() || ""),
+      name: nameTrim,
+      name_initial: nameInitial,
       email: String(email?.trim() || ""),
-      subject: String(subject?.trim() || "Contact Form Submission"),
+      subject: subjectLine,
+      /** Alias for EmailJS subject lines like `Contact Us: {{title}}` */
+      title: subjectLine,
       message: String(message?.trim() || ""),
-      from_name: String(name?.trim() || ""),
+      from_name: nameTrim,
       from_email: String(email?.trim() || ""),
       time: new Date().toLocaleString(),
+      site_url: siteUrl,
     };
 
     console.log("Sending email via EmailJS REST API");

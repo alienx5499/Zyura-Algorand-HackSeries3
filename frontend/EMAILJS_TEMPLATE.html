@@ -1,60 +1,96 @@
-<div style="font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-  
-  <!-- Header with Logos -->
-  <!-- In EmailJS: set template param site_url to your deployed URL (e.g. https://zyura-algorand.vercel.app) so images load. Logo files are in frontend/public/ -->
-  <div style="text-align: center; padding: 25px 20px; background-color: #000000; border-radius: 8px 8px 0 0;">
-    <table role="presentation" style="width: 100%; border-collapse: collapse;">
-      <tr>
-        <td style="text-align: center; vertical-align: middle;">
-          <!-- ZYURA Logo -->
-          <img src="{{site_url}}/logo.svg" alt="ZYURA Logo" style="height: 35px; width: auto; max-width: 180px; vertical-align: middle; display: inline-block;" />
-          <span style="color: #8b5cf6; font-size: 18px; font-weight: 600; margin: 0 10px; vertical-align: middle;">×</span>
-          <!-- Algorand Logo: public/algorand-logo.svg. For Gmail etc. add public/algorand-logo.png and use .png here -->
-          <img src="{{site_url}}/algorand-logo.svg" alt="Algorand Logo" style="height: 35px; width: auto; max-width: 180px; vertical-align: middle; display: inline-block;" />
-        </td>
-      </tr>
-      <tr>
-        <td style="text-align: center; padding-top: 10px;">
-          <div style="color: #8b5cf6; font-size: 14px; font-weight: 500;">From ZYURA on Algorand</div>
-        </td>
-      </tr>
-    </table>
-  </div>
+<!--
+  EmailJS — paste this into Email Templates → Content (HTML).
 
-  <!-- Message Content -->
-  <div style="padding: 30px 20px; background-color: #ffffff;">
-    <div style="margin-bottom: 20px; color: #2c3e50; font-size: 16px;">
-      A message by <strong>{{name}}</strong> has been received. Kindly respond at your earliest convenience.
-    </div>
+  Dashboard-aligned dark UI (matches PolicyCard / dashboard: black, dark-border, indigo + emerald accents).
 
-    <div style="margin-top: 20px; padding: 15px 0; border-width: 1px 0; border-style: dashed; border-color: lightgrey;">
-      <table role="presentation" style="width: 100%; border-collapse: collapse;">
-        <tr>
-          <td style="vertical-align: top; width: 60px;">
-            <div style="padding: 6px 10px; margin: 0 10px; background-color: aliceblue; border-radius: 5px; font-size: 26px; text-align: center; width: 40px; height: 40px; line-height: 40px;" role="img">
-              👤
-            </div>
-          </td>
-          <td style="vertical-align: top;">
-            <div style="color: #2c3e50; font-size: 16px; margin-bottom: 5px;"><strong>{{name}}</strong></div>
-            <div style="color: #cccccc; font-size: 13px; margin-bottom: 10px;">{{time}}</div>
-            <div style="color: #666666; font-size: 14px; margin-bottom: 10px; font-weight: 600;">Subject: {{subject}}</div>
-            <p style="font-size: 16px; color: #333333; margin: 0; line-height: 1.6;">{{message}}</p>
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eeeeee;">
-              <div style="color: #666666; font-size: 13px;">Reply to: <a href="mailto:{{email}}" style="color: #8b5cf6; text-decoration: none;">{{email}}</a></div>
-            </div>
-          </td>
-        </tr>
-      </table>
-    </div>
-  </div>
+  - Subject:  Contact Us: {{title}}
+  - To:       your inbox (fixed)
+  - From Name: {{name}}
+  - Reply To: {{email}}
 
-  <!-- Footer -->
-  <div style="text-align: center; padding: 20px; background-color: #f8f9fa; border-radius: 0 0 8px 8px; border-top: 1px solid #eeeeee;">
-    <div style="color: #666666; font-size: 12px;">
-      Powered by <strong style="color: #8b5cf6;">ZYURA</strong> on <strong style="color: #0CDAD9;">Algorand</strong>
-    </div>
-  </div>
+  Variables sent by POST /api/contact (template_params):
+  - name, name_initial, email, subject, title, message, from_name, from_email, time, site_url
+-->
 
+<div style="margin:0;padding:0;background-color:#000000;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#000000;">
+    <tr>
+      <td align="center" style="padding:24px 16px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;background-color:#000000;border-radius:12px;border:1px solid #2A2A2A;box-shadow:0 4px 16px rgba(0,0,0,0.5);overflow:hidden;">
+          <!-- Header (dashboard-style: white title, muted subtitle) -->
+          <tr>
+            <td style="padding:22px 24px;background-color:#000000;border-bottom:1px solid #2A2A2A;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="vertical-align:top;">
+                    <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:10px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#737373;margin-bottom:8px;">ZYURA</div>
+                    <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:20px;font-weight:700;color:#FFFFFF;line-height:1.25;margin-bottom:6px;">New contact message</div>
+                    <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:13px;line-height:1.5;color:#A3A3A3;">From the public contact form on your dashboard experience.</div>
+                  </td>
+                  <td align="right" style="vertical-align:top;white-space:nowrap;padding-left:12px;">
+                    <span style="display:inline-block;padding:4px 10px;border-radius:6px;border:1px solid rgba(16,185,129,0.3);background-color:rgba(16,185,129,0.1);font-family:system-ui,sans-serif;font-size:11px;font-weight:600;color:#34D399;">New</span>
+                    <div style="margin-top:12px;">
+                      <a href="{{site_url}}" style="font-family:system-ui,-apple-system,sans-serif;font-size:12px;font-weight:500;color:#6366F1;text-decoration:none;">Open site</a>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Intro -->
+          <tr>
+            <td style="padding:20px 24px 8px 24px;">
+              <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.6;color:#D4D4D4;">
+                A message from <strong style="color:#FFFFFF;">{{name}}</strong> has been received. Reply using the address below.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Card (PolicyCard-like: bg-black, dark-border, inner dividers) -->
+          <tr>
+            <td style="padding:12px 24px 24px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#000000;border-radius:12px;border:1px solid #2A2A2A;">
+                <tr>
+                  <td style="padding:20px 20px 20px 20px;width:56px;vertical-align:top;">
+                    <div style="width:44px;height:44px;border-radius:999px;background-color:#000000;border:1px solid #2A2A2A;font-family:system-ui,sans-serif;font-size:17px;font-weight:700;color:#818CF8;text-align:center;line-height:44px;">
+                      {{name_initial}}
+                    </div>
+                  </td>
+                  <td style="padding:20px 20px 20px 0;vertical-align:top;">
+                    <div style="font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:16px;font-weight:600;color:#E5E7EB;margin-bottom:4px;">{{name}}</div>
+                    <div style="font-family:system-ui,sans-serif;font-size:12px;color:#6B7280;margin-bottom:14px;">{{time}}</div>
+
+                    <div style="padding-top:14px;border-top:1px solid #2A2A2A;">
+                      <div style="font-family:system-ui,sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#737373;margin-bottom:8px;">Inquiry</div>
+                      <div style="font-family:system-ui,sans-serif;font-size:14px;color:#F4F4F5;line-height:1.5;">{{subject}}</div>
+                    </div>
+
+                    <div style="margin-top:16px;padding-top:16px;border-top:1px solid #2A2A2A;">
+                      <div style="font-family:system-ui,sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#737373;margin-bottom:8px;">Message</div>
+                      <p style="margin:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;line-height:1.65;color:#D4D4D4;white-space:pre-wrap;">{{message}}</p>
+                    </div>
+
+                    <div style="margin-top:18px;padding-top:16px;border-top:1px solid #2A2A2A;">
+                      <span style="font-family:system-ui,sans-serif;font-size:12px;color:#737373;">Reply to: </span>
+                      <a href="mailto:{{email}}" style="font-family:system-ui,sans-serif;font-size:13px;color:#6366F1;text-decoration:none;font-weight:500;">{{email}}</a>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:0 24px 22px 24px;">
+              <p style="margin:0;font-family:system-ui,sans-serif;font-size:11px;line-height:1.5;color:#737373;text-align:center;">
+                Sent via ZYURA contact form · <span style="color:#525252;">{{site_url}}</span>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </div>
-
