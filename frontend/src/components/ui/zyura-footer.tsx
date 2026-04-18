@@ -267,7 +267,7 @@ function FooterCTA() {
             >
               <Link
                 className="flex group items-center gap-2 text-white hover:text-white"
-                href="https://github.com/alienx5499/Zyura-Algorand"
+                href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -344,7 +344,7 @@ export function ZyuraFooter() {
                       className="text-neutral-400 hover:text-white hover:bg-purple-500/10 border border-transparent hover:border-purple-500/50 transition-all"
                     >
                       <Link
-                        href="https://github.com/alienx5499/Zyura-Algorand"
+                        href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3"
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -433,7 +433,7 @@ export function ZyuraFooter() {
                 <ul className="space-y-3 text-sm">
                   <li>
                     <Link
-                      href="https://github.com/alienx5499/Zyura-Algorand"
+                      href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-pink-400 transition-colors duration-200 inline-block relative group"
@@ -444,7 +444,7 @@ export function ZyuraFooter() {
                   </li>
                   <li>
                     <Link
-                      href="https://github.com/alienx5499/Zyura-Algorand"
+                      href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-pink-400 transition-colors duration-200 inline-block relative group"
@@ -455,7 +455,7 @@ export function ZyuraFooter() {
                   </li>
                   <li>
                     <Link
-                      href="https://github.com/alienx5499/Zyura-Algorand/issues"
+                      href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3/issues"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-pink-400 transition-colors duration-200 inline-block relative group"
@@ -512,7 +512,7 @@ export function ZyuraFooter() {
                   </li>
                   <li>
                     <Link
-                      href="https://github.com/alienx5499/Zyura-Algorand/blob/main/LICENSE"
+                      href="https://github.com/alienx5499/Zyura-Algorand-HackSeries3/blob/main/LICENSE"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-neutral-400 hover:text-cyan-400 transition-colors duration-200 inline-block relative group"

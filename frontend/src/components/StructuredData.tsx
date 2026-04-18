@@ -26,7 +26,7 @@ export function StructuredData() {
         },
       ],
       sameAs: [
-        "https://github.com/alienx5499/Zyura-Algorand",
+        "https://github.com/alienx5499/Zyura-Algorand-HackSeries3",
         "https://x.com/alienx5499",
       ],
       contactPoint: {
