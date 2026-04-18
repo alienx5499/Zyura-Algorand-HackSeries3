@@ -12,7 +12,6 @@ import MintUSDC from "@/components/MintUSDC";
 import TestPage from "@/components/TestPage";
 import { DevProvider } from "@/contexts/DevContext";
 import { DevPanel } from "@/components/ui/DevPanel";
-import { Toaster } from "@/components/ui/sonner";
 
 // Protected Route Component (currently unused)
 // const ProtectedRoute = memo(function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -33,7 +32,6 @@ const AppContent = memo(function AppContent() {
         </Routes>
         <DevPanel />
       </Router>
-      <Toaster />
     </>
   );
 });
