@@ -3,10 +3,7 @@
 import { Copy, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  FAUCET_PRESET_AMOUNTS,
-  FAUCET_WALLET_CAP_USDC,
-} from "@/components/dashboard/faucet/constants";
+import { FAUCET_WALLET_CAP_USDC } from "@/components/dashboard/faucet/constants";
 import { FaucetSectionShell } from "@/components/dashboard/faucet/section-shell";
 
 type FaucetWalletSnapshotCardProps = {
@@ -16,7 +13,6 @@ type FaucetWalletSnapshotCardProps = {
   headroomUsdc: number;
   capFillPercent: number;
   maxNextPreset: number;
-  allowedPresetCount: number;
 };
 
 export function FaucetWalletSnapshotCard({
@@ -26,7 +22,6 @@ export function FaucetWalletSnapshotCard({
   headroomUsdc,
   capFillPercent,
   maxNextPreset,
-  allowedPresetCount,
 }: FaucetWalletSnapshotCardProps) {
   return (
     <FaucetSectionShell>
@@ -102,10 +97,6 @@ export function FaucetWalletSnapshotCard({
                 {maxNextPreset > 0 ? `${maxNextPreset} USDC` : "—"}
               </span>
             </div>
-            <p className="text-xs text-gray-500">
-              {allowedPresetCount} of {FAUCET_PRESET_AMOUNTS.length} amount
-              buttons available at this balance.
-            </p>
           </div>
         </CardContent>
       </Card>
