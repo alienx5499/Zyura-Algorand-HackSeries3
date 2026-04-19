@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Navbar1 } from "@/components/ui/navbar-1";
+import { Navbar } from "@/components/ui/navbar";
 import {
   FAUCET_PRESET_AMOUNTS,
   FAUCET_WALLET_CAP_USDC,
@@ -186,7 +186,7 @@ export default function FaucetPage() {
 
   return (
     <>
-      <Navbar1 />
+      <Navbar />
       <main className="min-h-screen bg-black pt-24 pb-16">
         <div className="container mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
           <FaucetPageHeader />

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Navbar1 } from "@/components/ui/navbar-1";
+import { Navbar } from "@/components/ui/navbar";
 import { useAlgorandWallet } from "@/contexts/WalletConnectionProvider";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -214,7 +214,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Navbar1 />
+      <Navbar />
       <main className="min-h-screen bg-black pt-24 pb-16">
         <div className="container mx-auto max-w-7xl px-4 md:px-6 lg:px-8">
           {/* Header */}
