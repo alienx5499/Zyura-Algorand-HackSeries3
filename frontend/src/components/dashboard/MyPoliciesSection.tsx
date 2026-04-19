@@ -1,32 +1,15 @@
-import { AlertCircle, ChevronDown, FileText, ShieldCheck } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, Search, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { GlowingEffect } from "@/components/ui/glowing-effect";
-import { PolicyCard } from "@/components/dashboard/PolicyCard";
 import { PolicyFetchLottie } from "@/components/dashboard/policy-fetch-lottie";
-import {
-  getDisplayFlightAndPnr,
-  microToUsd,
-  normalizePolicyStatus,
-  toSafeNumber,
-} from "@/lib/dashboard/policy-utils";
-import { getAssetOrAddressExplorerUrl } from "@/lib/dashboard/explorer-utils";
-
-type MyPoliciesSectionProps = {
-  activeSection: string;
-  connected: boolean;
-  policiesFetchError: string | null;
-  fetchMyPolicies: () => void | Promise<void>;
-  isLoadingPolicies: boolean;
-  myPolicies: any[];
-  showAllPolicies: boolean;
-  setShowAllPolicies: (value: boolean) => void;
-  setShowBuyForm: (value: boolean) => void;
-  peraExplorerBase: string;
-  address?: string | null;
-  openPolicyModal: (policy: any) => void;
-};
+import { PoliciesGrid } from "@/components/dashboard/my-policies/PoliciesGrid";
+import { PoliciesHeader } from "@/components/dashboard/my-policies/PoliciesHeader";
+import { PolicySearchBar } from "@/components/dashboard/my-policies/PolicySearchBar";
+import type { MyPoliciesSectionProps } from "@/components/dashboard/my-policies/types";
+import { usePolicySearch } from "@/components/dashboard/my-policies/usePolicySearch";
 
 export function MyPoliciesSection({
   activeSection,
@@ -42,6 +25,9 @@ export function MyPoliciesSection({
   address,
   openPolicyModal,
 }: MyPoliciesSectionProps) {
+  const [policySearch, setPolicySearch] = useState("");
+  const filteredPolicies = usePolicySearch(myPolicies, policySearch);
+
   return (
     <motion.section
       id="policies"
@@ -71,32 +57,14 @@ export function MyPoliciesSection({
       />
       <Card className="relative overflow-hidden rounded-xl border-[0.75px] border-gray-800 bg-black">
         <CardContent className="p-6 md:p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <motion.div
-              className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center"
-              whileHover={{
-                scale: 1.1,
-                rotate: [0, -5, 5, -5, 0],
-                transition: { duration: 0.5 },
-              }}
-            >
-              <FileText className="w-5 h-5 text-emerald-400" />
-            </motion.div>
-            <h2 className="text-2xl font-semibold text-white">My Policies</h2>
-            <AnimatePresence>
-              {myPolicies.length > 0 && (
-                <motion.span
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ type: "spring", stiffness: 200 }}
-                  className="ml-auto px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-sm font-medium border border-emerald-500/30"
-                >
-                  {myPolicies.length}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </div>
+          <PoliciesHeader
+            totalPolicies={myPolicies.length}
+            filteredCount={filteredPolicies.length}
+          />
+
+          {myPolicies.length > 0 && (
+            <PolicySearchBar value={policySearch} onChange={setPolicySearch} />
+          )}
 
           {!connected ? (
             <EmptyState
@@ -143,109 +111,21 @@ export function MyPoliciesSection({
                 Buy Policy
               </button>
             </div>
+          ) : filteredPolicies.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              title="No matching policies"
+              description="Try searching with flight number, PNR, policy ID, status, or product ID."
+            />
           ) : (
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-2 gap-4"
-              initial="hidden"
-              animate="visible"
-              variants={{
-                visible: {
-                  transition: {
-                    staggerChildren: 0.1,
-                  },
-                },
-              }}
-            >
-              {(showAllPolicies ? myPolicies : myPolicies.slice(0, 2)).map(
-                (p, index) => {
-                  const policyIdRaw = toSafeNumber(p.id);
-                  const policyId = policyIdRaw > 0 ? policyIdRaw : index + 1;
-                  const productIdAttr = toSafeNumber(p.product_id);
-                  const dep = toSafeNumber(p.departure_time);
-                  const premium6 = toSafeNumber(p.premium_paid);
-                  const coverage6 = toSafeNumber(p.coverage_amount);
-                  const status = normalizePolicyStatus(p.status);
-
-                  const departureDateObj =
-                    dep > 0 ? new Date(dep * 1000) : null;
-                  const departureIso =
-                    departureDateObj &&
-                    Number.isFinite(departureDateObj.getTime())
-                      ? departureDateObj.toISOString()
-                      : new Date().toISOString();
-                  const premiumUsd = microToUsd(premium6);
-                  const coverageUsd = microToUsd(coverage6);
-
-                  const explorerUrl = getAssetOrAddressExplorerUrl(
-                    peraExplorerBase,
-                    p.assetId,
-                    address,
-                  );
-                  const { flight: cardFlight, pnr: cardPnr } =
-                    getDisplayFlightAndPnr(p);
-
-                  return (
-                    <motion.div
-                      key={`${policyId}-${index}`}
-                      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{
-                        delay: index * 0.1,
-                        type: "spring",
-                        stiffness: 200,
-                        damping: 20,
-                      }}
-                      whileHover={{ y: -4 }}
-                    >
-                      <PolicyCard
-                        policyId={policyId}
-                        status={status}
-                        productId={productIdAttr}
-                        flight={cardFlight}
-                        pnr={cardPnr || undefined}
-                        departureIso={departureIso}
-                        premiumUsd={premiumUsd}
-                        coverageUsd={coverageUsd}
-                        explorerUrl={explorerUrl}
-                        payoutTxId={p.payoutTxId}
-                        onOpen={() => openPolicyModal(p)}
-                      />
-                    </motion.div>
-                  );
-                },
-              )}
-
-              {myPolicies.length > 2 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="mt-4 flex justify-center col-span-full"
-                >
-                  <motion.button
-                    onClick={() => setShowAllPolicies(!showAllPolicies)}
-                    whileHover={{
-                      scale: 1.02,
-                      borderColor: "rgba(99, 102, 241, 0.6)",
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    className="px-4 py-2 rounded-lg bg-gray-800/50 border border-gray-700 text-gray-300 hover:text-white hover:border-indigo-500/50 text-sm font-medium transition-all duration-200 flex items-center gap-2"
-                  >
-                    {showAllPolicies ? (
-                      <>
-                        <ChevronDown className="w-4 h-4 rotate-180" />
-                        Show Less
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-4 h-4" />
-                        Show All Policies ({myPolicies.length})
-                      </>
-                    )}
-                  </motion.button>
-                </motion.div>
-              )}
-            </motion.div>
+            <PoliciesGrid
+              policies={filteredPolicies}
+              showAllPolicies={showAllPolicies}
+              setShowAllPolicies={setShowAllPolicies}
+              peraExplorerBase={peraExplorerBase}
+              address={address}
+              openPolicyModal={openPolicyModal}
+            />
           )}
         </CardContent>
       </Card>
