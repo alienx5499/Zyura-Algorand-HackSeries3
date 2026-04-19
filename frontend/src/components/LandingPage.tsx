@@ -168,8 +168,8 @@ const LandingPage = () => {
               "Fair Coverage",
               "Global Protection",
             ]}
-            morphTime={3}
-            cooldownTime={2}
+            morphTime={1.5}
+            cooldownTime={1}
             className="h-32 flex items-center justify-center"
             textClassName="text-white font-bold"
           />

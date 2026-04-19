@@ -20,21 +20,32 @@ export function GooeyText({
 }: GooeyTextProps) {
   const text1Ref = React.useRef<HTMLSpanElement>(null);
   const text2Ref = React.useRef<HTMLSpanElement>(null);
+  const frameRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
     let textIndex = texts.length - 1;
-    let time = new Date();
+    let time = performance.now();
     let morph = 0;
     let cooldown = cooldownTime;
 
+    if (texts.length > 0 && text1Ref.current && text2Ref.current) {
+      text1Ref.current.textContent = texts[textIndex % texts.length];
+      text2Ref.current.textContent = texts[(textIndex + 1) % texts.length];
+      text1Ref.current.style.filter = "";
+      text1Ref.current.style.opacity = "0%";
+      text2Ref.current.style.filter = "";
+      text2Ref.current.style.opacity = "100%";
+    }
+
     const setMorph = (fraction: number) => {
       if (text1Ref.current && text2Ref.current) {
-        text2Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-        text2Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+        const safeFraction = Math.max(0.0001, Math.min(0.9999, fraction));
+        text2Ref.current.style.filter = `blur(${Math.min(8 / safeFraction - 8, 24)}px)`;
+        text2Ref.current.style.opacity = `${Math.pow(safeFraction, 0.4) * 100}%`;
 
-        fraction = 1 - fraction;
-        text1Ref.current.style.filter = `blur(${Math.min(8 / fraction - 8, 100)}px)`;
-        text1Ref.current.style.opacity = `${Math.pow(fraction, 0.4) * 100}%`;
+        const inverseFraction = 1 - safeFraction;
+        text1Ref.current.style.filter = `blur(${Math.min(8 / inverseFraction - 8, 24)}px)`;
+        text1Ref.current.style.opacity = `${Math.pow(inverseFraction, 0.4) * 100}%`;
       }
     };
 
@@ -61,12 +72,11 @@ export function GooeyText({
       setMorph(fraction);
     };
 
-    function animate() {
-      requestAnimationFrame(animate);
-      const newTime = new Date();
+    function animate(now: number) {
+      frameRef.current = requestAnimationFrame(animate);
       const shouldIncrementIndex = cooldown > 0;
-      const dt = (newTime.getTime() - time.getTime()) / 1000;
-      time = newTime;
+      const dt = (now - time) / 1000;
+      time = now;
 
       cooldown -= dt;
 
@@ -85,10 +95,13 @@ export function GooeyText({
       }
     }
 
-    animate();
+    frameRef.current = requestAnimationFrame(animate);
 
     return () => {
-      // Cleanup function if needed
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
     };
   }, [texts, morphTime, cooldownTime]);
 

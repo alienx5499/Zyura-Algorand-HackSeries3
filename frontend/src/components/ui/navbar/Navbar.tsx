@@ -56,21 +56,26 @@ export function Navbar() {
     (pathname === "/dashboard" && item.section === activeSection) ||
     (item.path === "/dashboard/faucet" && pathname === "/dashboard/faucet");
 
+  const navigateHome = () => {
+    if (pathname === "/") {
+      isNavigatingRef.current = true;
+      setActiveSection("hero");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.history.pushState(null, "", "/");
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+        setActiveSection("hero");
+      }, 500);
+      return;
+    }
+
+    // Let the new page render naturally at the top.
+    router.push("/");
+  };
+
   const handleNavClick = (item: NavItem) => {
     if (item.name === "Home") {
-      if (pathname === "/") {
-        isNavigatingRef.current = true;
-        setActiveSection("hero");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        window.history.pushState(null, "", "/");
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-          setActiveSection("hero");
-        }, 800);
-      } else {
-        router.push("/");
-        setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 100);
-      }
+      navigateHome();
       setIsMenuOpen(false);
       return;
     }
@@ -166,22 +171,7 @@ export function Navbar() {
           >
             <button
               onClick={() => {
-                if (pathname === "/") {
-                  isNavigatingRef.current = true;
-                  setActiveSection("hero");
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                  window.history.pushState(null, "", "/");
-                  setTimeout(() => {
-                    isNavigatingRef.current = false;
-                    setActiveSection("hero");
-                  }, 800);
-                } else {
-                  router.push("/");
-                  setTimeout(
-                    () => window.scrollTo({ top: 0, behavior: "smooth" }),
-                    100,
-                  );
-                }
+                navigateHome();
               }}
               className="flex items-center flex-shrink-0"
               aria-label="Go to home"
