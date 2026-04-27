@@ -65,7 +65,7 @@
     "@types/three": "^0.183.1",
     "dotenv": "^17.4.2",
     "eslint": "^9.39.4",
-    "eslint-config-next": "16.2.3",
+    "eslint-config-next": "16.2.4",
     "husky": "^9.1.7",
     "prettier": "^3.8.3",
     "tailwindcss": "^4.2.4",
