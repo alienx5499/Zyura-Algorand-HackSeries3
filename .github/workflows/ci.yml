@@ -38,7 +38,7 @@ env:
 
 jobs:
   frontend:
-    name: Frontend - format, lint
+    name: Frontend - format, lint, typecheck, build
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -70,8 +70,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Note skipped typecheck/build
-        run: echo "Skipping frontend typecheck/build in CI due current baseline TS/dependency drift."
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
 
   contracts-build:
     name: Contracts - format, lint, compile
@@ -120,7 +123,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     needs: contracts-build
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_contract_tests == true }}
+    if: >-
+      ${{
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.run_contract_tests == true
+        ) || (
+          github.event_name != 'workflow_dispatch' &&
+          secrets.ALGOD_SERVER != '' &&
+          secrets.ALGOD_PORT != '' &&
+          secrets.INDEXER_SERVER != '' &&
+          secrets.INDEXER_TOKEN != '' &&
+          secrets.INDEXER_PORT != ''
+        )
+      }}
     defaults:
       run:
         working-directory: contracts

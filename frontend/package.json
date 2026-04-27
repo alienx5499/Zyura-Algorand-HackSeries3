@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "typecheck": "tsc --noEmit",
     "start": "next start",
     "lint": "eslint",
     "format": "npx prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",

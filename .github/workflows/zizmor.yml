@@ -1,0 +1,37 @@
+name: Action Security Lint (zizmor)
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/workflows/zizmor.yml"
+  push:
+    branches: [main, master, develop]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/workflows/zizmor.yml"
+  merge_group:
+    types: [checks_requested]
+  schedule:
+    - cron: "0 4 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zizmor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  zizmor:
+    name: Zizmor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run zizmor
+        uses: zizmorcore/zizmor-action@v0.1.4
