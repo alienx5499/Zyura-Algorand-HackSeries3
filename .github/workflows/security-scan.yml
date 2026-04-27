@@ -128,7 +128,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check for secrets
-        uses: trufflesecurity/trufflehog@0f58ae7c5036094a1e3e750d18772af92821b503
+        uses: trufflesecurity/trufflehog@47e7b7cd74f578e1e3145d48f669f22fd1330ca6
         with:
           extra_args: --only-verified
 
