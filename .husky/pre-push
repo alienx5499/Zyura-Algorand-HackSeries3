@@ -37,33 +37,42 @@ if [ "$run_frontend_checks" = false ] && [ "$run_contract_checks" = false ]; the
   run_contract_checks=true
 fi
 
+max_jobs="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
+case "$max_jobs" in
+  ''|*[!0-9]*)
+    max_jobs=4
+    ;;
+esac
+
+parallel_commands_file="$(mktemp)"
+trap 'rm -f "$parallel_commands_file"' EXIT INT TERM
+
 if [ "$run_frontend_checks" = true ]; then
-  echo "pre-push: frontend checks (format + lint + typecheck) in parallel"
-
-  pnpm -C frontend format:check &
-  pid_format=$!
-
-  pnpm -C frontend lint &
-  pid_lint=$!
-
-  pnpm -C frontend typecheck &
-  pid_typecheck=$!
-
-  failed=0
-  wait "$pid_format" || failed=1
-  wait "$pid_lint" || failed=1
-  wait "$pid_typecheck" || failed=1
-
-  if [ "$failed" -ne 0 ]; then
-    echo "pre-push: frontend checks failed."
-    exit 1
-  fi
+  cat >>"$parallel_commands_file" <<'EOF'
+pnpm -C frontend format:check
+pnpm -C frontend lint
+EOF
 fi
 
 if [ "$run_contract_checks" = true ]; then
-  echo "pre-push: contracts checks (lint + compile-contract)"
-  pnpm -C contracts lint
-  pnpm -C contracts compile-contract
+  cat >>"$parallel_commands_file" <<'EOF'
+pnpm -C contracts lint
+pnpm -C contracts compile-contract
+EOF
+fi
+
+echo "pre-push: running checks with up to ${max_jobs} parallel workers"
+if ! xargs -I{} -P "$max_jobs" sh -c 'echo ">>> {}"; {}' <"$parallel_commands_file"; then
+  echo "pre-push: one or more checks failed."
+  exit 1
+fi
+
+if [ "$run_frontend_checks" = true ]; then
+  echo "pre-push: running frontend typecheck (serial)"
+  pnpm -C frontend typecheck
+
+  echo "pre-push: running frontend build (serial)"
+  pnpm -C frontend build
 fi
 
 echo "pre-push: all checks passed."

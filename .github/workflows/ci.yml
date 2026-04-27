@@ -127,6 +127,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     needs: contracts-build
+    environment: contracts-testnet
     if: >-
       ${{
         (
