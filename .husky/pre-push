@@ -1,0 +1,53 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+echo "pre-push: running quality gates..."
+
+run_frontend_checks=false
+run_contract_checks=false
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ -z "${local_sha:-}" ]; then
+    continue
+  fi
+
+  if echo "${remote_sha:-}" | grep -Eq '^0+$'; then
+    run_frontend_checks=true
+    run_contract_checks=true
+    continue
+  fi
+
+  for changed_file in $(git diff --name-only "$remote_sha" "$local_sha"); do
+    case "$changed_file" in
+      frontend/*|.github/*)
+        run_frontend_checks=true
+        ;;
+      contracts/*|.github/*)
+        run_contract_checks=true
+        ;;
+    esac
+  done
+done
+
+if [ "$run_frontend_checks" = false ] && [ "$run_contract_checks" = false ]; then
+  run_frontend_checks=true
+  run_contract_checks=true
+fi
+
+if [ "$run_frontend_checks" = true ]; then
+  echo "pre-push: frontend checks (lint + typecheck + build)"
+  pnpm -C frontend lint
+  pnpm -C frontend typecheck
+  pnpm -C frontend build
+fi
+
+if [ "$run_contract_checks" = true ]; then
+  echo "pre-push: contracts checks (lint + compile-contract)"
+  pnpm -C contracts lint
+  pnpm -C contracts compile-contract
+fi
+
+echo "pre-push: all checks passed."
