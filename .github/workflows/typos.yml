@@ -31,9 +31,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
 
       - name: Check spelling
-        uses: crate-ci/typos@v1.30.2
+        uses: crate-ci/typos@1401a6733807403ecb902fb23056198f744f5020
         with:
           files: frontend contracts

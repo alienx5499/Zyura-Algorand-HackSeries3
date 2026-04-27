@@ -38,10 +38,26 @@ if [ "$run_frontend_checks" = false ] && [ "$run_contract_checks" = false ]; the
 fi
 
 if [ "$run_frontend_checks" = true ]; then
-  echo "pre-push: frontend checks (lint + typecheck + build)"
-  pnpm -C frontend lint
-  pnpm -C frontend typecheck
-  pnpm -C frontend build
+  echo "pre-push: frontend checks (format + lint + typecheck) in parallel"
+
+  pnpm -C frontend format:check &
+  pid_format=$!
+
+  pnpm -C frontend lint &
+  pid_lint=$!
+
+  pnpm -C frontend typecheck &
+  pid_typecheck=$!
+
+  failed=0
+  wait "$pid_format" || failed=1
+  wait "$pid_lint" || failed=1
+  wait "$pid_typecheck" || failed=1
+
+  if [ "$failed" -ne 0 ]; then
+    echo "pre-push: frontend checks failed."
+    exit 1
+  fi
 fi
 
 if [ "$run_contract_checks" = true ]; then
