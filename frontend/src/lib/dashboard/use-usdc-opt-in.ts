@@ -114,7 +114,9 @@ export function useUsdcOptIn({
   );
 
   const fetchUsdcOptInStatusRef = useRef(fetchUsdcOptInStatus);
-  fetchUsdcOptInStatusRef.current = fetchUsdcOptInStatus;
+  useEffect(() => {
+    fetchUsdcOptInStatusRef.current = fetchUsdcOptInStatus;
+  }, [fetchUsdcOptInStatus]);
 
   /** If the page remounts after opening Pera (common on mobile), restore spinner and poll until opted in. */
   useEffect(() => {
