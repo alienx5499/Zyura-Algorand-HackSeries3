@@ -9,7 +9,7 @@ import { refreshBalanceSoon, type FaucetLastSend } from "./faucetPageShared";
 type UseFaucetRequestActionsArgs = {
   address: string | null | undefined;
   displayBalance: number;
-  fetchUsdcOptInStatus: () => Promise<void>;
+  fetchUsdcOptInStatus: () => Promise<unknown>;
   setLastSend: (value: FaucetLastSend | null) => void;
   setBalanceOptimistic: (value: number | null) => void;
 };

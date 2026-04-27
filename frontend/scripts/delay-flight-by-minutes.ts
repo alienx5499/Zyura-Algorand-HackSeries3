@@ -51,6 +51,7 @@ if (
   console.error("DELAY_MINUTES is required (e.g. 75)");
   process.exit(1);
 }
+const delayMinutes = DELAY_MINUTES;
 
 async function main() {
   const flightRoot = githubFlightPath();
@@ -83,12 +84,12 @@ async function main() {
     process.exit(1);
   }
 
-  const actualDepartureUnix = scheduled + DELAY_MINUTES * 60;
+  const actualDepartureUnix = scheduled + delayMinutes * 60;
   console.log(
     `Flight ${FLIGHT_NUMBER}: scheduled=${scheduled} (${new Date(scheduled * 1000).toISOString()})`,
   );
   console.log(
-    `Setting actual departure ${DELAY_MINUTES} min later: ${actualDepartureUnix} (${new Date(actualDepartureUnix * 1000).toISOString()})`,
+    `Setting actual departure ${delayMinutes} min later: ${actualDepartureUnix} (${new Date(actualDepartureUnix * 1000).toISOString()})`,
   );
 
   const apiUrl = process.env.API_URL || "http://localhost:3000";
@@ -129,7 +130,7 @@ async function main() {
   );
   console.log(
     "  cd ../contracts && POLICY_IDS=<id1>,<id2> DELAY_MINUTES=" +
-      DELAY_MINUTES +
+      delayMinutes +
       " npx ts-node scripts/run-payout.ts",
   );
 }

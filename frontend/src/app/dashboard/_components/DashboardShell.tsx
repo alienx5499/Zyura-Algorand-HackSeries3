@@ -3,6 +3,7 @@
 import { Navbar } from "@/components/ui/navbar";
 import { InteractiveTutorial } from "@/components/dashboard/InteractiveTutorial";
 import { PolicyModal } from "@/components/dashboard/PolicyModal";
+import type { PolicyModalData } from "@/components/dashboard/PolicyModal";
 import { DashboardHeader } from "@/app/dashboard/_components/DashboardHeader";
 import { DashboardMainGrid } from "@/app/dashboard/_components/DashboardMainGrid";
 import { DashboardPurchaseBanner } from "@/app/dashboard/_components/DashboardPurchaseBanner";
@@ -19,7 +20,7 @@ type DashboardShellProps = {
   mainGridProps: DashboardMainGridProps;
   showPolicyModal: boolean;
   closePolicyModal: () => void;
-  policyModalData: unknown;
+  policyModalData: PolicyModalData | null;
   tutorialFormHandlers: DashboardTutorialFormHandlers;
 };
 

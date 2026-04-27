@@ -77,7 +77,7 @@ export async function GET(
       address,
       assetIds,
       assetHoldings: normalizedHoldings,
-      microAlgos: String(info.amount ?? info.balance ?? 0),
+      microAlgos: String(info.amount ?? 0),
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);

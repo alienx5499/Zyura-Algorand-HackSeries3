@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import type { PnrFlightRoute, PnrStatus } from "@/lib/dashboard/types";
 
 export type DashboardTutorialFormHandlers = {
@@ -15,13 +16,13 @@ export type DashboardTutorialFormHandlers = {
 export type DashboardMainGridProps = {
   activeSection: string;
   showBuyForm: boolean;
-  setShowBuyForm: (value: boolean) => void;
+  setShowBuyForm: React.Dispatch<React.SetStateAction<boolean>>;
   connected: boolean;
   isSubmitting: boolean;
   handleBuy: () => void;
   productId: string;
   setProductId: (value: string) => void;
-  products: unknown[];
+  products: { id: string }[];
   isLoadingProducts: boolean;
   showProductById: (id: string) => void;
   pnr: string;

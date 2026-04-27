@@ -8,8 +8,6 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import LandingPage from "@/components/LandingPage";
-import MintUSDC from "@/components/MintUSDC";
-import TestPage from "@/components/TestPage";
 import { DevProvider } from "@/contexts/DevContext";
 import { DevPanel } from "@/components/ui/DevPanel";
 
@@ -26,8 +24,6 @@ const AppContent = memo(function AppContent() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/test" element={<TestPage />} />
-          <Route path="/mint-usdc" element={<MintUSDC />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <DevPanel />

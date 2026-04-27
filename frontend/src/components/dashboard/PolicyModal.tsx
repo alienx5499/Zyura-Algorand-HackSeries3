@@ -13,23 +13,25 @@ import {
 interface PolicyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  data: {
-    policyId: number;
-    productId: number;
-    status: string;
-    flight: string;
-    pnr?: string;
-    departureIso: string;
-    premiumUsd: string;
-    coverageUsd: string;
-    explorerUrl: string;
-    payoutTxId?: string;
-    metadataUrl?: string;
-    imageUrl?: string;
-    expectedJsonUrl?: string;
-    expectedSvgUrl?: string;
-  } | null;
+  data: PolicyModalData | null;
 }
+
+export type PolicyModalData = {
+  policyId: number;
+  productId: number;
+  status: string;
+  flight: string;
+  pnr?: string;
+  departureIso: string;
+  premiumUsd: string;
+  coverageUsd: string;
+  explorerUrl: string;
+  payoutTxId?: string;
+  metadataUrl?: string;
+  imageUrl?: string;
+  expectedJsonUrl?: string;
+  expectedSvgUrl?: string;
+};
 
 export function PolicyModal({ isOpen, onClose, data }: PolicyModalProps) {
   if (!data) return null;

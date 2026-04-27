@@ -107,7 +107,7 @@ void main() {
 `;
 
 function LavaLampShader() {
-  const meshRef = useRef();
+  const meshRef = useRef<THREE.Mesh | null>(null);
   const { size } = useThree();
 
   const uniforms = useMemo(
@@ -135,7 +135,7 @@ function LavaLampShader() {
     uniforms.resolution.value.set(width, height, a1, a2);
   }, [size, uniforms]);
 
-  useFrame((state) => {
+  useFrame((state: { clock: { elapsedTime: number } }) => {
     if (meshRef.current) {
       uniforms.time.value = state.clock.elapsedTime;
     }
